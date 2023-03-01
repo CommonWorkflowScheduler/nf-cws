@@ -36,10 +36,10 @@ jobs:
           architecture: x64
 
       - name: Compile
-        run: ./gradlew assemble
+        run: sh gradlew assemble
 
       - name: Tests
-        run: ./gradlew check
+        run: sh gradlew check
         env:
           GRADLE_OPTS: '-Dorg.gradle.daemon=false'
 
