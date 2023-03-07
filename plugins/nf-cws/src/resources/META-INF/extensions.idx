@@ -1,1 +1,2 @@
 nextflow.cws.CWSFactory
+nextflow.cws.k8s.CWSK8sExecutor
