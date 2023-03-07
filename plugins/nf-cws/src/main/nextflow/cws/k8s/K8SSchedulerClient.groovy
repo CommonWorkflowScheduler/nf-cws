@@ -116,7 +116,7 @@ class K8SSchedulerClient extends SchedulerClient {
             container.remove( 'command' )
             (container.resources as Map)?.remove( 'limits' )
 
-            k8sClient.podCreate( pod, Paths.get('.nextflow-scheduler.yaml'), namespace)
+            k8sClient.podCreate( pod, Paths.get('.nextflow-scheduler.yaml') )
         }
 
         //wait for scheduler to get ready
