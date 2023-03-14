@@ -13,7 +13,7 @@ import nextflow.k8s.model.PodVolumeClaim
 import java.nio.file.Paths
 
 @Slf4j
-class K8SSchedulerClient extends SchedulerClient {
+class K8sSchedulerClient extends SchedulerClient {
 
     private final CWSK8sConfig.K8sScheduler schedulerConfig
     private final K8sClient k8sClient
@@ -21,7 +21,7 @@ class K8SSchedulerClient extends SchedulerClient {
     private final Collection<PodVolumeClaim> volumeClaims
     private String ip
 
-    K8SSchedulerClient(
+    K8sSchedulerClient(
             CWSConfig config,
             CWSK8sConfig.K8sScheduler schedulerConfig,
             String namespace,

@@ -67,7 +67,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         Map data
 
         if( cwsK8sConfig ) {
-            schedulerClient = new K8SSchedulerClient(
+            schedulerClient = new K8sSchedulerClient(
                     cwsConfig,
                     cwsK8sConfig,
                     k8sConfig.getNamespace(),
