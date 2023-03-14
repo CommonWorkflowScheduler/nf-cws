@@ -26,7 +26,7 @@ class K8SSchedulerClient extends SchedulerClient {
             CWSK8sConfig.K8sScheduler schedulerConfig,
             String namespace,
             String runName,
-            CWSK8sClient k8sClient,
+            K8sClient k8sClient,
             Collection<PodVolumeClaim> volumeClaims
     ) {
         super( config, runName )
