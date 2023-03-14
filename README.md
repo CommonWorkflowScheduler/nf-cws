@@ -8,7 +8,7 @@ This plugin enables Nextflow to communicate with a Common Workflow Scheduler ins
 
 ### How to use
 
-To run Nextflow with this plugin, you need version >=`tbd`.
+To run Nextflow with this plugin, you need version >`23.02.01-edge`.
 To activate the plugin, add the following to your `nextflow.config`:
 ```
 plugins {
@@ -70,3 +70,26 @@ k8s {
 | runAsUser | - | Run the scheduler as a specific user |
 | autoClose | - | Stop the pod after the workflow is finished |
 | nodeSelector | - | A node selector for the CWS pod |
+
+### Tracing
+This plugin adds additional fields to the trace report. Therefore, you have to add the required fields to the `trace.fields` field in your Nextflow config (check also the official [documentation](https://www.nextflow.io/docs/latest/tracing.html#trace-report)).
+The following fields can be used:
+| Name | Description |
+| :--- | :--- |
+| submit_to_scheduler_time               | Time in ms to register the task at CWS |
+| submit_to_k8s_time                     | Time to create and submit pod to k8s |
+| scheduler_time_in_queue                | How long was the task in the queue until it got scheduled |
+| scheduler_place_in_queue               | At which place was the task in the queue when it got scheduled |
+| scheduler_tried_to_schedule            | How often was a scheduling plan calculated until the task was assigned |
+| scheduler_time_to_schedule             | How long does it took to calculate the location for this task |
+| scheduler_nodes_tried                  | How many nodes have been compared |
+| scheduler_nodes_cost                   | Cost value to schedule on the different nodes (only available for some algorithms) |
+| scheduler_could_stop_fetching          | How often could the scheduler skip a node |
+| scheduler_best_cost                    | Cost on the selected node (only available for some algorithms) |
+| scheduler_delta_schedule_submitted     | Time delta between starting to calculate the scheduling plan and submitting the task to the target node |
+| scheduler_delta_schedule_alignment     | Time delta between starting to calculate the scheduling plan and finding the target node |
+| scheduler_batch_id                     | The id of the batch the task belongs to |
+| scheduler_delta_batch_start_submitted  | Time delta between a batch was started and the scheduler received this task from the workflow engine |
+| scheduler_delta_batch_start_received   | Time delta between a batch was started and the scheduler received the pod from the k8s API |
+| scheduler_delta_batch_closed_batch_end | Time delta between a batch was closed by the workflow engine and the scheduler received the pod from the k8s API |
+| scheduler_delta_submitted_batch_end    | Time delta between a task was submitted and the batch became scheduable |
