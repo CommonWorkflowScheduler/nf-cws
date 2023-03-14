@@ -15,7 +15,7 @@ class SchedulerClient {
     private int tasksInBatch = 0
     private String dns
 
-    SchedulerClient(CWSConfig config, String runName ) {
+    SchedulerClient( CWSConfig config, String runName ) {
         this.config = config
         this.runName = runName
         this.dns = config.dns
