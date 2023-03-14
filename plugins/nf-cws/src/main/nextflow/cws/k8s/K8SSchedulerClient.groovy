@@ -64,8 +64,7 @@ class K8SSchedulerClient extends SchedulerClient {
             else log.error "Unknown state for ${schedulerConfig.getName()}: ${state.toString()}"
 
         } catch ( K8sResponseException e ) {
-            if ( e.getErrorCode() == 404 ) start = true
-            else log.error( "Got unexpected HTTP code ${e.getErrorCode()} while checking scheduler's state", e.message )
+            log.error( "Got unexpected HTTP error ${e.response} while checking scheduler's state", e.message )
         } catch ( NodeTerminationException ignored){
             //NodeTerminationException is thrown if pod is not found
             start = true
