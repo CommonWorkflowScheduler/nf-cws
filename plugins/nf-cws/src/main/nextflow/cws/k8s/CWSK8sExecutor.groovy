@@ -6,7 +6,7 @@ import groovy.transform.PackageScope
 import groovy.util.logging.Slf4j
 import nextflow.cws.CWSConfig
 import nextflow.cws.CWSSchedulerBatch
-
+import nextflow.cws.SchedulerClient
 import nextflow.cws.processor.CWSTaskPollingMonitor
 import nextflow.k8s.K8sConfig
 import nextflow.k8s.K8sExecutor
@@ -23,7 +23,7 @@ import org.pf4j.ExtensionPoint
 @ServiceName('k8s')
 class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
 
-    @PackageScope K8SSchedulerClient schedulerClient
+    @PackageScope SchedulerClient schedulerClient
     @PackageScope CWSSchedulerBatch schedulerBatch
 
     @Override
@@ -63,9 +63,10 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         super.register()
 
         final CWSK8sConfig.K8sScheduler cwsK8sConfig = (k8sConfig as CWSK8sConfig).getScheduler()
+        CWSConfig cwsConfig = new CWSConfig(session.config.navigate('cws') as Map)
+        Map data
 
         if( cwsK8sConfig ) {
-            CWSConfig cwsConfig = new CWSConfig(session.config.navigate('cws') as Map)
             schedulerClient = new K8SSchedulerClient(
                     cwsConfig,
                     cwsK8sConfig,
@@ -77,14 +78,20 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
             this.schedulerBatch?.setSchedulerClient( schedulerClient )
             final PodOptions podOptions = k8sConfig.getPodOptions()
             Boolean traceEnabled = session.config.navigate('trace.enabled') as Boolean
-            Map data = [
+            data = [
                     volumeClaims : podOptions.volumeClaims,
                     traceEnabled : traceEnabled,
                     costFunction : cwsConfig.getCostFunction(),
             ]
-
-            schedulerClient.registerScheduler( data )
+        } else {
+            data = [
+                    dns : cwsConfig.dns,
+                    namespace : k8sConfig.getNamespace(),
+                    costFunction : cwsConfig.getCostFunction(),
+            ]
+            schedulerClient = new SchedulerClient( cwsConfig, session.runName )
         }
+        schedulerClient.registerScheduler( data )
     }
 
     @Override
