@@ -4,6 +4,7 @@ import groovy.util.logging.Slf4j
 import nextflow.cws.CWSConfig
 import nextflow.cws.SchedulerClient
 import nextflow.exception.NodeTerminationException
+import nextflow.k8s.client.K8sClient
 import nextflow.k8s.client.K8sResponseException
 import nextflow.k8s.model.PodSecurityContext
 import nextflow.k8s.model.PodSpecBuilder
@@ -15,7 +16,7 @@ import java.nio.file.Paths
 class K8SSchedulerClient extends SchedulerClient {
 
     private final CWSK8sConfig.K8sScheduler schedulerConfig
-    private final CWSK8sClient k8sClient
+    private final K8sClient k8sClient
     private final String namespace
     private final Collection<PodVolumeClaim> volumeClaims
     private String ip
@@ -128,9 +129,14 @@ class K8SSchedulerClient extends SchedulerClient {
             if( ++i % 20 == 0 ) log.trace "Waiting for scheduler to start, current state: ${state.toString()}"
         } while ( state.waiting || state.isEmpty() )
 
-        ip = k8sClient.podIP( schedulerConfig.getName() )
+        ip = getPodIP( schedulerConfig.getName() )
         if( !state.running ) throw new IllegalStateException( "Scheduler pod ${schedulerConfig.getName()} was not started, state: ${state.toString()}" )
 
+    }
+
+    private String getPodIP( String podName ){
+        final resp = k8sClient.podStatus(podName)
+        return (resp?.status as Map)?.podIP
     }
 
 }

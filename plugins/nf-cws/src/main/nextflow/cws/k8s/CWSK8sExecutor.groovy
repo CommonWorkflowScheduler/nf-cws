@@ -34,11 +34,6 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         return new CWSK8sConfig( (Map<String,Object>)session.config.k8s )
     }
 
-    @Override
-    protected K8sClient createClient( ClientConfig clientConfig ) {
-        return new CWSK8sClient( clientConfig )
-    }
-
     /**
      * @return A {@link nextflow.processor.TaskMonitor} associated to this executor type
      */
@@ -78,7 +73,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
                     cwsK8sConfig,
                     k8sConfig.getNamespace(),
                     session.runName,
-                    client as CWSK8sClient,
+                    client,
                     k8sConfig.getPodOptions().getVolumeClaims()
             )
             this.schedulerBatch?.setSchedulerClient( schedulerClient )
