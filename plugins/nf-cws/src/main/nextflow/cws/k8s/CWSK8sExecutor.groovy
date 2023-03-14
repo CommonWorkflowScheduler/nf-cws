@@ -10,8 +10,6 @@ import nextflow.cws.CWSSchedulerBatch
 import nextflow.cws.processor.CWSTaskPollingMonitor
 import nextflow.k8s.K8sConfig
 import nextflow.k8s.K8sExecutor
-import nextflow.k8s.client.ClientConfig
-import nextflow.k8s.client.K8sClient
 import nextflow.k8s.model.PodOptions
 import nextflow.processor.TaskHandler
 import nextflow.processor.TaskMonitor
