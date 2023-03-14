@@ -2,7 +2,6 @@ package nextflow.cws.processor
 
 import groovy.util.logging.Slf4j
 import nextflow.Session
-import nextflow.processor.TaskHandler
 import nextflow.processor.TaskPollingMonitor
 import nextflow.util.Duration
 
@@ -47,33 +46,12 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
      *
      * @return The number of tasks submitted for execution
      */
+    @Override
     protected int submitPendingTasks() {
-        int count = 0
-        Iterator<TaskHandler> itr = pendingQueue.iterator()
         schedulerBatch?.startBatch()
-        while( itr.hasNext() && session.isSuccess() ) {
-            final handler = itr.next()
-            submitRateLimit?.acquire()
-            try {
-                if( !canSubmit(handler) )
-                    continue
-
-                schedulerBatch?.startSubmit()
-                count++
-                handler.incProcessForks()
-                submit(handler)
-            }
-            catch ( Throwable e ) {
-                handleException(handler, e)
-                session.notifyTaskComplete(handler)
-            }
-            // remove processed handler either on successful submit or failed one (managed by catch section)
-            // when `canSubmit` return false the handler should be retained to be tried in a following iteration
-            itr.remove()
-        }
+        int pendingTasks = super.submitPendingTasks()
         schedulerBatch?.endBatch()
-
-        return count
+        return pendingTasks
     }
 
 }

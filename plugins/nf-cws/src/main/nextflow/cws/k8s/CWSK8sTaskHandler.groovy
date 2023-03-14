@@ -24,10 +24,12 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private long submitToK8sTime = -1
 
+    private final CWSK8sExecutor executor
 
-    CWSK8sTaskHandler(TaskRun task, CWSK8sExecutor executor ) {
+    CWSK8sTaskHandler( TaskRun task, CWSK8sExecutor executor ) {
         super( task, executor )
         this.schedulerClient = executor.schedulerClient
+        this.executor = executor
     }
 
     protected Map newSubmitRequest0(TaskRun task, String imageName) {
@@ -110,6 +112,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     @Override
     @CompileDynamic
     void submit() {
+        executor.schedulerBatch?.startSubmit()
         long start = System.currentTimeMillis()
         if ( schedulerClient ) {
             registerTask()
