@@ -23,6 +23,7 @@ plugins {
 | dns | - | Provide the link to the running CWS instance |
 | strategy | - | Which strategy should be used for scheduling; available strategies depend on the CWS instance |
 | costFunction | - | Which cost function should be used for scheduling; available strategies depend on the CWS instance |
+| batchSize |  | Number of tasks to submit together (only if more than this are ready to run); default: 1 |
 
 ##### Example: 
 ```
@@ -30,6 +31,7 @@ cws {
     dns = 'http://cws-scheduler/'
     strategy = 'rank_max-fair'
     costFunction = 'MinSize'
+    batchSize = 10
 }
 ```
 
