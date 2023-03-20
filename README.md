@@ -37,7 +37,7 @@ cws {
 
 #### K8s Executor
 
-The `k8s` executor allows starting a Common Workflow Scheduler instance on demand. If you want to use this feature, you have to define the following:
+The `k8s` executor allows starting a Common Workflow Scheduler instance on demand. This will happen if you do not define any CWS-related config. Otherwise, you can configure the following:
 
 ```
 k8s {
