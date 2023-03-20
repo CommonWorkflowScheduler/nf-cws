@@ -62,9 +62,14 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
     protected void register() {
         super.register()
 
-        final CWSK8sConfig.K8sScheduler cwsK8sConfig = (k8sConfig as CWSK8sConfig).getScheduler()
+        CWSK8sConfig.K8sScheduler cwsK8sConfig = (k8sConfig as CWSK8sConfig).getScheduler()
         CWSConfig cwsConfig = new CWSConfig(session.config.navigate('cws') as Map)
         Map data
+
+        if ( !cwsK8sConfig && !cwsConfig.dns ) {
+            //Use default configuration
+            cwsK8sConfig = CWSK8sConfig.K8sScheduler.defaultConfig( k8sConfig )
+        }
 
         if( cwsK8sConfig ) {
             schedulerClient = new K8sSchedulerClient(

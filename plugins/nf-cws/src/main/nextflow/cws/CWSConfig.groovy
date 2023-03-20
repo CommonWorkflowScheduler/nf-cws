@@ -8,7 +8,7 @@ class CWSConfig {
     private final Map<String,Object> target
 
     CWSConfig(Map<String,Object> scheduler) {
-        this.target = scheduler
+        this.target = scheduler ?: [:]
     }
 
     String getDns() { target.dns as String }

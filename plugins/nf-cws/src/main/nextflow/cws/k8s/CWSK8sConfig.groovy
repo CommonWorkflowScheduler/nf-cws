@@ -1,6 +1,8 @@
 package nextflow.cws.k8s
 
 import groovy.transform.CompileStatic
+import groovy.transform.Memoized
+import groovy.transform.PackageScope
 import nextflow.k8s.K8sConfig
 import nextflow.k8s.model.PodNodeSelector
 
@@ -18,6 +20,7 @@ class CWSK8sConfig extends K8sConfig {
     }
 
     @CompileStatic
+    @PackageScope
     static class K8sScheduler {
 
         Map<String,Object> target
@@ -50,6 +53,15 @@ class CWSK8sConfig extends K8sConfig {
 
         PodNodeSelector getNodeSelector(){
             return target.nodeSelector ? new PodNodeSelector( target.nodeSelector ) : null
+        }
+
+        @Memoized
+        static K8sScheduler defaultConfig( K8sConfig k8sConfig ){
+            return new K8sScheduler([
+                    "serviceAccount" : k8sConfig.getServiceAccount(),
+                    "runAsUser" : 0,
+                    "autoClose" : true
+            ] as Map<String, Object>)
         }
 
     }
