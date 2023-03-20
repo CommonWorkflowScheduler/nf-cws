@@ -23,7 +23,7 @@ plugins {
 | dns | - | Provide the link to the running CWS instance |
 | strategy | - | Which strategy should be used for scheduling; available strategies depend on the CWS instance |
 | costFunction | - | Which cost function should be used for scheduling; available strategies depend on the CWS instance |
-| batchSize |  | Number of tasks to submit together (only if more than this are ready to run); default: 1 |
+| batchSize | - | Number of tasks to submit together (only if more than this are ready to run); default: 1 |
 
 ##### Example: 
 ```
@@ -61,7 +61,7 @@ k8s {
 | Attribute | Required | Explanation |
 |:---:|---|---|
 | name | - | The name of the pod created |
-| serviceAccount | x | Service account used by the scheduler |
+| serviceAccount | - | Service account used by the scheduler |
 | imagePullPolicy | - | Image pull policy for the created pod ([k8s docs](https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy)) |
 | cpu | - | Number of cores to use for the scheduler pod |
 | memory | - | Memory to use for the scheduler pod |

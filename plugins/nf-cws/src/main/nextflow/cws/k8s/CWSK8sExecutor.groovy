@@ -75,6 +75,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
             schedulerClient = new K8sSchedulerClient(
                     cwsConfig,
                     cwsK8sConfig,
+                    k8sConfig,
                     k8sConfig.getNamespace(),
                     session.runName,
                     client,

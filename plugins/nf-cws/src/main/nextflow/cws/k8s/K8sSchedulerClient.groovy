@@ -4,6 +4,7 @@ import groovy.util.logging.Slf4j
 import nextflow.cws.CWSConfig
 import nextflow.cws.SchedulerClient
 import nextflow.exception.NodeTerminationException
+import nextflow.k8s.K8sConfig
 import nextflow.k8s.client.K8sClient
 import nextflow.k8s.client.K8sResponseException
 import nextflow.k8s.model.PodSecurityContext
@@ -17,6 +18,7 @@ class K8sSchedulerClient extends SchedulerClient {
 
     private final CWSK8sConfig.K8sScheduler schedulerConfig
     private final K8sClient k8sClient
+    private final K8sConfig k8sConfig
     private final String namespace
     private final Collection<PodVolumeClaim> volumeClaims
     private String ip
@@ -24,6 +26,7 @@ class K8sSchedulerClient extends SchedulerClient {
     K8sSchedulerClient(
             CWSConfig config,
             CWSK8sConfig.K8sScheduler schedulerConfig,
+            K8sConfig k8sConfig,
             String namespace,
             String runName,
             K8sClient k8sClient,
@@ -32,6 +35,7 @@ class K8sSchedulerClient extends SchedulerClient {
         super( config, runName )
         this.volumeClaims = volumeClaims
         this.k8sClient = k8sClient
+        this.k8sConfig = k8sConfig
         this.schedulerConfig = schedulerConfig
         this.namespace = namespace ?: 'default'
     }
@@ -79,7 +83,7 @@ class K8sSchedulerClient extends SchedulerClient {
                     .withCpus( schedulerConfig.getCPUs() )
                     .withMemory( schedulerConfig.getMemory() )
                     .withImagePullPolicy( schedulerConfig.getImagePullPolicy() )
-                    .withServiceAccount( schedulerConfig.getServiceAccount() )
+                    .withServiceAccount( schedulerConfig.getServiceAccount() ?: k8sConfig.getServiceAccount() )
                     .withNamespace( namespace )
                     .withLabel('component', 'scheduler')
                     .withLabel('tier', 'control-plane')
