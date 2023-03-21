@@ -8,8 +8,8 @@ This plugin enables Nextflow to communicate with a Common Workflow Scheduler ins
 
 ### How to use
 
-To run Nextflow with this plugin, you need version >`23.02.01-edge`.
-To activate the plugin, add the following to your `nextflow.config`:
+To run Nextflow with this plugin, you need version >=`23.03.0-edge`.
+To activate the plugin, add `-plugins nf-cws` to your `nextflow` call or add the following to your `nextflow.config`:
 ```
 plugins {
   id 'nf-cws'
