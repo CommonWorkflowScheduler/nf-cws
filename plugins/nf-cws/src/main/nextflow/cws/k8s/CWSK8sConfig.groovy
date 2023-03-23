@@ -33,13 +33,14 @@ class CWSK8sConfig extends K8sConfig {
 
         String getServiceAccount() { target.serviceAccount as String }
 
-        String getImagePullPolicy() { target.imagePullPolicy as String }
+        // If no container is specified pull the latest image
+        String getImagePullPolicy() { target.container ? target.imagePullPolicy as String : "Always" }
 
         Integer getCPUs() { target.cpu as Integer ?: 1 }
 
         String getMemory() { target.memory as String ?: "1400Mi" }
 
-        String getContainer() { target.container as String ?: 'commonworkflowscheduler/kubernetesscheduler:v1.0' }
+        String getContainer() { target.container as String ?: 'commonworkflowscheduler/kubernetesscheduler:latest' }
 
         String getCommand() { target.command as String }
 
