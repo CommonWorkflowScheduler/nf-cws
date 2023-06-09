@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Plugin-Id: nf-cws
-Plugin-Version: 1.0.1-SNAPSHOT
+Plugin-Version: 1.0.1
 Plugin-Class: nextflow.cws.CWSPlugin
 Plugin-Provider: nextflow
 Plugin-Requires: >23.02.01-edge
