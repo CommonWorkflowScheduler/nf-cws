@@ -6,6 +6,8 @@ import groovy.transform.PackageScope
 import nextflow.k8s.K8sConfig
 import nextflow.k8s.model.PodNodeSelector
 
+import java.util.stream.Collectors
+
 class CWSK8sConfig extends K8sConfig {
 
     private Map<String,Object> target
@@ -24,6 +26,21 @@ class CWSK8sConfig extends K8sConfig {
     static class K8sScheduler {
 
         Map<String,Object> target
+
+        private final String[] fields = [
+                'name',
+                'serviceAccount',
+                'cpu',
+                'memory',
+                'container',
+                'command',
+                'port',
+                'workDir',
+                'runAsUser',
+                'autoClose',
+                'nodeSelector',
+                'imagePullPolicy'
+        ]
 
         K8sScheduler(Map<String,Object> scheduler) {
             this.target = scheduler
@@ -54,6 +71,13 @@ class CWSK8sConfig extends K8sConfig {
 
         PodNodeSelector getNodeSelector(){
             return target.nodeSelector ? new PodNodeSelector( target.nodeSelector ) : null
+        }
+
+        Map<String,Object> getAdditional() {
+            return target.entrySet()
+                    .stream()
+                    .filter{!(it.getKey() in fields) }
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
         }
 
         @Memoized
