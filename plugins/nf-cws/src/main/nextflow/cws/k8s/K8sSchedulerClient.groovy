@@ -41,7 +41,7 @@ class K8sSchedulerClient extends SchedulerClient {
     }
 
     protected String getDNS(){
-        return "http://${ip.replace('.','-')}.${namespace}.pod.cluster.local:${schedulerConfig.getPort()}/v1/"
+        return "http://${ip}:${schedulerConfig.getPort()}/v1/"
     }
 
     @Override
