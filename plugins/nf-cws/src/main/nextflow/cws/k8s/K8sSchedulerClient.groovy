@@ -72,7 +72,7 @@ class K8sSchedulerClient extends SchedulerClient {
         } catch ( NodeTerminationException ignored){
             //NodeTerminationException is thrown if pod is not found
             start = true
-            log.info "Scheduler ${schedulerConfig.getName()} can not be found"
+            log.info "Scheduler ${schedulerConfig.getName()} can not be found and will be started..."
         }
 
         if( start ){
