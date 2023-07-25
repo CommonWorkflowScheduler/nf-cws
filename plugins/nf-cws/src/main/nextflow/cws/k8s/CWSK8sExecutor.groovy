@@ -81,7 +81,6 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
                     client,
                     k8sConfig.getPodOptions().getVolumeClaims()
             )
-            this.schedulerBatch?.setSchedulerClient( schedulerClient )
             final PodOptions podOptions = k8sConfig.getPodOptions()
             Boolean traceEnabled = session.config.navigate('trace.enabled') as Boolean
             data = [
@@ -98,6 +97,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
             ]
             schedulerClient = new SchedulerClient( cwsConfig, session.runName )
         }
+        this.schedulerBatch?.setSchedulerClient( schedulerClient )
         schedulerClient.registerScheduler( data )
     }
 
