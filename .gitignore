@@ -8,3 +8,5 @@ build
 work
 out
 /gradle.properties
+/logs.tmp
+*.jar
