@@ -18,12 +18,12 @@ class SchedulerClient {
     SchedulerClient( CWSConfig config, String runName ) {
         this.config = config
         this.runName = runName
-        this.dns = config.dns
+        this.dns = config.dns?.endsWith('/') ? config.dns[0..-2] : config.dns
         CWSSession.INSTANCE.addSchedulerClient( this )
     }
 
     protected String getDNS() {
-        return this.dns
+        return dns ? dns + "/v1/" : null
     }
 
     synchronized void registerScheduler( Map data ) {
