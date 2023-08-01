@@ -13,7 +13,7 @@ class SchedulerClient {
     private boolean registered = false
     private boolean closed = false
     private int tasksInBatch = 0
-    private String dns
+    protected String dns
 
     SchedulerClient( CWSConfig config, String runName ) {
         this.config = config
