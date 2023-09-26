@@ -13,17 +13,17 @@ class SchedulerClient {
     private boolean registered = false
     private boolean closed = false
     private int tasksInBatch = 0
-    private String dns
+    protected String dns
 
     SchedulerClient( CWSConfig config, String runName ) {
         this.config = config
         this.runName = runName
-        this.dns = config.dns
+        this.dns = config.dns?.endsWith('/') ? config.dns[0..-2] : config.dns
         CWSSession.INSTANCE.addSchedulerClient( this )
     }
 
     protected String getDNS() {
-        return this.dns
+        return dns ? dns + "/v1/" : null
     }
 
     synchronized void registerScheduler( Map data ) {
