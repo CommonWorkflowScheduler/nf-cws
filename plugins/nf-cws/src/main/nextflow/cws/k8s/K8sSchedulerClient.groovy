@@ -46,10 +46,7 @@ class K8sSchedulerClient extends SchedulerClient {
 
     @Override
     synchronized void registerScheduler(Map data) {
-        // only startScheduler() if cws.dns was not provided
-        if ( super.getDNS()==null ) {
-            startScheduler()
-        }
+        startScheduler()
         data.dns = getDNS()
         data.namespace = namespace
         super.registerScheduler(data)
