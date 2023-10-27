@@ -20,7 +20,7 @@ plugins {
 
 | Attribute | Required | Explanation |
 |:---:|:---:|---|
-| dns | - | Provide the link to the running CWS instance |
+| dns | - | Provide the link to the running CWS instance. <br>NOTE: If you provide an address here, the `k8s` executor will not try to start a Common Workflow Scheduler instance on demand. |
 | strategy | - | Which strategy should be used for scheduling; available strategies depend on the CWS instance |
 | costFunction | - | Which cost function should be used for scheduling; available strategies depend on the CWS instance |
 | batchSize | - | Number of tasks to submit together (only if more than this are ready to run); default: 1 |
