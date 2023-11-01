@@ -87,6 +87,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
                     volumeClaims : podOptions.volumeClaims,
                     traceEnabled : traceEnabled,
                     costFunction : cwsConfig.getCostFunction(),
+                    memoryPredictor : cwsConfig.getMemoryPredictor(),
                     additional   : cwsK8sConfig.getAdditional()
             ]
         } else {

@@ -17,6 +17,8 @@ class CWSConfig {
 
     String getCostFunction() { target.costFunction as String }
 
+    String getMemoryPredictor() { target.memoryPredictor as String }
+
     int getBatchSize() {
         String s = target.batchSize as String
         //Default: 1 -> No batching
