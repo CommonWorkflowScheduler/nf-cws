@@ -1,3 +1,0 @@
-rootProject.name = 'nf-cws'
-include('plugins')
-include('plugins:nf-cws')

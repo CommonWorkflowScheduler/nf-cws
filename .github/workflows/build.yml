@@ -36,7 +36,7 @@ jobs:
           architecture: x64
 
       - name: Compile
-        run: mv settings.build settings.gradle; sh gradlew assemble
+        run: sh gradlew assemble
 
       - name: Tests
         run: sh gradlew check
