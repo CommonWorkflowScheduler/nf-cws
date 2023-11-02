@@ -24,6 +24,7 @@ plugins {
 | strategy | - | Which strategy should be used for scheduling; available strategies depend on the CWS instance |
 | costFunction | - | Which cost function should be used for scheduling; available strategies depend on the CWS instance |
 | batchSize | - | Number of tasks to submit together (only if more than this are ready to run); default: 1 |
+| memoryPredictor | - | The memory predictor that shall be used for task scaling. <br>If not set, task scaling is disabled. See Common Workflow Scheduler for supported predictors. |
 
 ##### Example: 
 ```
