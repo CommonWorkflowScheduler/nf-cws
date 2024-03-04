@@ -102,6 +102,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
                 cpus : task.config.getCpus(),
                 memoryInBytes : task.config.getMemory()?.toBytes(),
                 workDir : task.getWorkDirStr(),
+                repetition : task.failCount,
         ]
         return schedulerClient.registerTask( config, task.id.intValue() )
     }
