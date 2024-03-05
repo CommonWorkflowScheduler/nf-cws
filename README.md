@@ -79,6 +79,7 @@ This plugin adds additional fields to the trace report. Therefore, you have to a
 The following fields can be used:
 | Name | Description |
 | :--- | :--- |
+| memory_adapted                         | The memory that was used after adaption by the scheduler |
 | submit_to_scheduler_time               | Time in ms to register the task at CWS |
 | submit_to_k8s_time                     | Time to create and submit pod to k8s |
 | scheduler_time_in_queue                | How long was the task in the queue until it got scheduled |
