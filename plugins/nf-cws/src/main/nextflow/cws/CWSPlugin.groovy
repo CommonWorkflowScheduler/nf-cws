@@ -31,6 +31,7 @@ class CWSPlugin extends BasePlugin {
                 scheduler_delta_batch_start_received:  'num',
                 scheduler_delta_batch_closed_batch_end:'num',
                 scheduler_delta_submitted_batch_end:   'num',
+                memory_adapted:                        'str'
         ] )
     }
 

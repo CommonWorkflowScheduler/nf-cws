@@ -26,8 +26,13 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private final CWSK8sExecutor executor
 
+    private CWSK8sClient client
+
+    private String memoryAdapted = null
+
     CWSK8sTaskHandler( TaskRun task, CWSK8sExecutor executor ) {
         super( task, executor )
+        this.client = executor.getCWSK8sClient()
         this.schedulerClient = executor.schedulerClient
         this.executor = executor
     }
@@ -176,11 +181,19 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
+    protected void deletePodIfSuccessful(TaskRun task) {
+        if ( executor.getCWSConfig().memoryPredictor ){
+            memoryAdapted = client.getPodMemory( podName )
+        }
+        super.deletePodIfSuccessful( task )
+    }
+
     @Override
     TraceRecord getTraceRecord() {
         final TraceRecord traceRecord = super.getTraceRecord()
-        traceRecord.put(  "submit_to_scheduler_time", submitToSchedulerTime )
-        traceRecord.put(  "submit_to_k8s_time", submitToK8sTime )
+        traceRecord.put( "submit_to_scheduler_time", submitToSchedulerTime )
+        traceRecord.put( "submit_to_k8s_time", submitToK8sTime )
+        traceRecord.put( "memory_adapted", memoryAdapted )
 
         Path file = task.workDir?.resolve( CMD_TRACE_SCHEDULER )
         try {

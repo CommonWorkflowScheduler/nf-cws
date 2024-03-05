@@ -34,6 +34,11 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         return new CWSK8sConfig( (Map<String,Object>)session.config.k8s )
     }
 
+    @Memoized
+    @PackageScope CWSConfig getCWSConfig(){
+        new CWSConfig(session.config.navigate('cws') as Map)
+    }
+
     @PackageScope CWSK8sClient getCWSK8sClient() {
         client
     }
