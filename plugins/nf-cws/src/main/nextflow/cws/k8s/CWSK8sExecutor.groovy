@@ -10,6 +10,7 @@ import nextflow.cws.SchedulerClient
 import nextflow.cws.processor.CWSTaskPollingMonitor
 import nextflow.k8s.K8sConfig
 import nextflow.k8s.K8sExecutor
+import nextflow.k8s.client.K8sClient
 import nextflow.k8s.model.PodOptions
 import nextflow.processor.TaskHandler
 import nextflow.processor.TaskMonitor
@@ -25,11 +26,16 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
 
     @PackageScope SchedulerClient schedulerClient
     @PackageScope CWSSchedulerBatch schedulerBatch
+    protected CWSK8sClient client
 
     @Override
     @Memoized
     protected K8sConfig getK8sConfig() {
         return new CWSK8sConfig( (Map<String,Object>)session.config.k8s )
+    }
+
+    @PackageScope CWSK8sClient getCWSK8sClient() {
+        client
     }
 
     /**
@@ -61,6 +67,8 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
     @Override
     protected void register() {
         super.register()
+
+        this.client = new CWSK8sClient(super.getClient())
 
         CWSK8sConfig.K8sScheduler cwsK8sConfig = (k8sConfig as CWSK8sConfig).getScheduler()
         CWSConfig cwsConfig = new CWSConfig(session.config.navigate('cws') as Map)
