@@ -3,6 +3,7 @@ package nextflow.cws.k8s
 import groovy.transform.CompileDynamic
 import groovy.util.logging.Slf4j
 import nextflow.cws.SchedulerClient
+import nextflow.executor.BashWrapperBuilder
 import nextflow.extension.GroupKey
 import nextflow.file.FileHolder
 import nextflow.k8s.K8sTaskHandler
@@ -110,6 +111,12 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
                 repetition : task.failCount,
         ]
         return schedulerClient.registerTask( config, task.id.intValue() )
+    }
+
+    protected BashWrapperBuilder createBashWrapper(TaskRun task) {
+        return fusionEnabled()
+                ? fusionLauncher()
+                : new CWSK8sWrapperBuilder( task, executor.getCWSConfig().memoryPredictor as boolean )
     }
 
     /**
