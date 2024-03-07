@@ -191,6 +191,14 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     protected void deletePodIfSuccessful(TaskRun task) {
         if ( executor.getCWSConfig().memoryPredictor ){
             memoryAdapted = client.getPodMemory( podName )
+            TraceRecord traceRecord = super.getTraceRecord()
+            Map<String,Object> metrics = [
+                    ramRequest  : traceRecord.get( "memory" ),
+                    peakVmem    : traceRecord.get( "peak_vmem" ),
+                    peakRss     : traceRecord.get( "peak_rss" ),
+                    realtime   : traceRecord.get( "realtime" ),
+            ]
+            schedulerClient.submitMetrics( metrics, task.id.intValue() )
         }
         super.deletePodIfSuccessful( task )
     }
