@@ -101,6 +101,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
                     traceEnabled : traceEnabled,
                     costFunction : cwsConfig.getCostFunction(),
                     memoryPredictor : cwsConfig.getMemoryPredictor(),
+                    maxMemory : cwsConfig.getMaxMemory()?.toBytes(),
                     additional   : cwsK8sConfig.getAdditional()
             ]
         } else {
