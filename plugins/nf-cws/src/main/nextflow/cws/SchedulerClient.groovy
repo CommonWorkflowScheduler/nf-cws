@@ -66,7 +66,6 @@ class SchedulerClient {
     }
 
     void submitMetrics( Map metrics, int id ){
-        log.info("Submitting metrics $metrics for task $id")
         HttpURLConnection post = new URL("${getDNS()}/scheduler/$runName/metrics/task/$id").openConnection() as HttpURLConnection
         post.setRequestMethod( "POST" )
         String message = JsonOutput.toJson( metrics )
