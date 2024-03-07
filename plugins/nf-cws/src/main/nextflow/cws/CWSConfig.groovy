@@ -25,6 +25,11 @@ class CWSConfig {
         return s ? new MemoryUnit(s) : null
     }
 
+    MemoryUnit getMinMemory() {
+        String s = target.minMemory as String
+        return s ? new MemoryUnit(s) : null
+    }
+
     int getBatchSize() {
         String s = target.batchSize as String
         //Default: 1 -> No batching
