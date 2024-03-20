@@ -31,6 +31,8 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private String memoryAdapted = null
 
+    private long inputSize = -1
+
     CWSK8sTaskHandler( TaskRun task, CWSK8sExecutor executor ) {
         super( task, executor )
         this.client = executor.getCWSK8sClient()
@@ -48,10 +50,10 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     @CompileDynamic
     private void extractValue(
-            List<Object> booleanInputs,
-            List<Object> numberInputs,
-            List<Object> stringInputs,
-            List<Object> fileInputs,
+            List<Map<String,Object>> booleanInputs,
+            List<Map<String,Object>> numberInputs,
+            List<Map<String,String>> stringInputs,
+            List<Map<String,Object>> fileInputs,
             String key,
             Object input
     ){
@@ -79,20 +81,31 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
             log.error ( "input was of class ${input.class}: $input")
             throw new IllegalArgumentException( "Task input was of class and cannot be parsed: ${input.class}: $input" )
         }
+    }
 
+    private long calculateInputSize( List<Map<String,Object>> fileInputs ){
+        return fileInputs
+                .parallelStream()
+                .mapToLong {
+                    log.info("Calculating size of ${it?.value?.storePath}")
+                    final File file = new File(( it.value as Map<String,String>).storePath )
+                    return file.directory ? file.directorySize() : file.length()
+                }.sum()
     }
 
     private Map registerTask(){
 
-        final List<Object> booleanInputs = new LinkedList<>()
-        final List<Object> numberInputs = new LinkedList<>()
-        final List<Object> stringInputs = new LinkedList<>()
-        final List<Object> fileInputs = new LinkedList<>()
+        final List<Map<String,Object>> booleanInputs = new LinkedList<>()
+        final List<Map<String,Object>> numberInputs = new LinkedList<>()
+        final List<Map<String,String>> stringInputs = new LinkedList<>()
+        final List<Map<String,Object>> fileInputs = new LinkedList<>()
 
         for ( entry in task.getInputs() ){
             extractValue( booleanInputs, numberInputs, stringInputs, fileInputs, entry.getKey().name , entry.getValue() )
         }
 
+
+        inputSize = calculateInputSize(fileInputs)
         Map config = [
                 runName : "nf-${task.hash}",
                 inputs : [
@@ -109,6 +122,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
                 memoryInBytes : task.config.getMemory()?.toBytes(),
                 workDir : task.getWorkDirStr(),
                 repetition : task.failCount,
+                inputSize : inputSize
         ]
         return schedulerClient.registerTask( config, task.id.intValue() )
     }
@@ -209,6 +223,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         traceRecord.put( "submit_to_scheduler_time", submitToSchedulerTime )
         traceRecord.put( "submit_to_k8s_time", submitToK8sTime )
         traceRecord.put( "memory_adapted", memoryAdapted )
+        traceRecord.put( "input_size", inputSize )
 
         Path file = task.workDir?.resolve( CMD_TRACE_SCHEDULER )
         try {
