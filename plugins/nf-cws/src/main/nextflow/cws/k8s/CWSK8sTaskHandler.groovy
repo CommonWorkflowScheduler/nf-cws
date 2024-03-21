@@ -87,7 +87,6 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         return fileInputs
                 .parallelStream()
                 .mapToLong {
-                    log.info("Calculating size of ${it?.value?.storePath}")
                     final File file = new File(( it.value as Map<String,String>).storePath )
                     return file.directory ? file.directorySize() : file.length()
                 }.sum()
