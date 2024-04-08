@@ -152,22 +152,14 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     @Override
     boolean checkIfCompleted() {
         Map state = getState()
-        if ( !state || !state.terminated ) {
-            return false
-        }
         if( executor.getCWSConfig().memoryPredictor && state && state.terminated ) {
             if ( state.terminated.exitCode == 128
                     && (state.terminated.reason as String) == "StartError" ) {
-                task.aborted = true
-                //wrap because TaskProcessor.resumeOrDie checks the cause
-                throw new RuntimeException(new MemoryScalingFailure("The memory was choosen too small for the pod ${podName}" +
-                        " to be started. More memory is tried next time."))
-            } else if ( state.terminated.exitCode == 137
-                    && (state.terminated.reason as String) == "OOMKilled" ) {
-                task.aborted = true
-                //wrap because TaskProcessor.resumeOrDie checks the cause
-                throw new RuntimeException(new MemoryScalingFailure("The memory was choosen too small for the pod ${podName}" +
-                        " to be executed. More memory is tried next time."))
+                log.info("The memory was choosen too small for the pod ${podName} to be started. More memory is tried next time." )
+                task.error = new MemoryScalingFailure()
+            } else if ( (state.terminated.reason as String) == "OOMKilled" ) {
+                log.info( "The memory was choosen too small for the pod ${podName} to be executed. More memory is tried next time." )
+                task.error = new MemoryScalingFailure()
             }
         }
         return super.checkIfCompleted()
