@@ -33,6 +33,8 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private long inputSize = -1
 
+    private boolean failedOOM = false
+
     CWSK8sTaskHandler( TaskRun task, CWSK8sExecutor executor ) {
         super( task, executor )
         this.client = executor.getCWSK8sClient()
@@ -150,14 +152,26 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     }
 
     @Override
+    boolean checkIfRunning() {
+        try {
+            return super.checkIfRunning()
+        } catch ( Exception e) {
+            log.error("Error checking if task is running", e)
+            throw e
+        }
+    }
+
+    @Override
     boolean checkIfCompleted() {
         Map state = getState()
         if( executor.getCWSConfig().memoryPredictor && state && state.terminated ) {
             if ( state.terminated.exitCode == 128
                     && (state.terminated.reason as String) == "StartError" ) {
+                failedOOM = true
                 log.info("The memory was choosen too small for the pod ${podName} to be started. More memory is tried next time." )
                 task.error = new MemoryScalingFailure()
             } else if ( (state.terminated.reason as String) == "OOMKilled" ) {
+                failedOOM = true
                 log.info( "The memory was choosen too small for the pod ${podName} to be executed. More memory is tried next time." )
                 task.error = new MemoryScalingFailure()
             }
@@ -229,6 +243,16 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
             ]
             schedulerClient.submitMetrics( metrics, task.id.intValue() )
         }
+
+        // would not have been cleaned in the super method
+        if( !cleanupDisabled() && failedOOM ){
+            try {
+                client.podDelete(podName)
+            } catch( Exception e ) {
+                log.warn "Unable to cleanup: $podName -- see the log file for details", e
+            }
+        }
+
         super.deletePodIfSuccessful( task )
     }
 
