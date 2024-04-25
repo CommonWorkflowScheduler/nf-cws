@@ -233,7 +233,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     protected void deletePodIfSuccessful(TaskRun task) {
         if ( executor.getCWSConfig().memoryPredictor ){
-            memoryAdapted = client.getPodMemory( podName )
+            memoryAdapted = client.getAdaptedPodMemory( podName )
             TraceRecord traceRecord = super.getTraceRecord()
             Map<String,Object> metrics = [
                     ramRequest  : traceRecord.get( "memory" ),

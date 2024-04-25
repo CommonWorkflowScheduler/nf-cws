@@ -12,9 +12,20 @@ class CWSK8sClient extends K8sClient {
         super( k8sClient.config )
     }
 
-    Long getPodMemory(String podName){
+    /**
+     * Get the memory of a pod that has been adapted by the CWS
+     * @param podName The name of the pod
+     * @return The memory of the pod in bytes, null if the pod has not been adapted
+     */
+    Long getAdaptedPodMemory(String podName){
         assert podName
         final K8sResponseJson resp = podStatus0(podName)
+
+        //If this label is not set, the memory was not scaled
+        if ( resp?.metadata?.labels?."commonworkflowscheduler/memoryscaled" != 'true' ) {
+            return null
+        }
+
         def containers = (resp?.spec as Map)?.containers as List<Map>
         if ( containers == null || containers.size() == 0 ) {
             return null
