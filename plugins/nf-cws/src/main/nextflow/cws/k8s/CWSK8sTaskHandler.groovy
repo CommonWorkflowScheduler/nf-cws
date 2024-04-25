@@ -164,16 +164,23 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     @Override
     boolean checkIfCompleted() {
         Map state = getState()
-        if( executor.getCWSConfig().memoryPredictor && state && state.terminated ) {
-            if ( state.terminated.exitCode == 128
-                    && (state.terminated.reason as String) == "StartError" ) {
-                failedOOM = true
-                log.info("The memory was choosen too small for the pod ${podName} to be started. More memory is tried next time." )
-                task.error = new MemoryScalingFailure()
-            } else if ( (state.terminated.reason as String) == "OOMKilled" ) {
-                failedOOM = true
-                log.info( "The memory was choosen too small for the pod ${podName} to be executed. More memory is tried next time." )
-                task.error = new MemoryScalingFailure()
+        if( !state || !state.terminated ) {
+            return false
+        }
+        if( executor.getCWSConfig().memoryPredictor ) {
+            memoryAdapted = client.getAdaptedPodMemory( podName )
+            if ( memoryAdapted != null ) {
+                //only use a special failure logic if the memory was adapted
+                if (state.terminated.exitCode == 128
+                        && (state.terminated.reason as String) == "StartError") {
+                    failedOOM = true
+                    log.info("The memory was choosen too small for the pod ${podName} to be started. More memory is tried next time.")
+                    task.error = new MemoryScalingFailure()
+                } else if ((state.terminated.reason as String) == "OOMKilled") {
+                    failedOOM = true
+                    log.info("The memory was choosen too small for the pod ${podName} to be executed. More memory is tried next time.")
+                    task.error = new MemoryScalingFailure()
+                }
             }
         }
         return super.checkIfCompleted()
@@ -233,7 +240,6 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     protected void deletePodIfSuccessful(TaskRun task) {
         if ( executor.getCWSConfig().memoryPredictor ){
-            memoryAdapted = client.getAdaptedPodMemory( podName )
             TraceRecord traceRecord = super.getTraceRecord()
             Map<String,Object> metrics = [
                     ramRequest  : traceRecord.get( "memory" ),
