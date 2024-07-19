@@ -3,6 +3,7 @@ package nextflow.cws.k8s
 import groovy.transform.CompileDynamic
 import groovy.util.logging.Slf4j
 import nextflow.cws.SchedulerClient
+import nextflow.executor.BashWrapperBuilder
 import nextflow.extension.GroupKey
 import nextflow.file.FileHolder
 import nextflow.k8s.K8sTaskHandler
@@ -26,8 +27,17 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private final CWSK8sExecutor executor
 
+    private CWSK8sClient client
+
+    private String memoryAdapted = null
+
+    private long inputSize = -1
+
+    private boolean failedOOM = false
+
     CWSK8sTaskHandler( TaskRun task, CWSK8sExecutor executor ) {
         super( task, executor )
+        this.client = executor.getCWSK8sClient()
         this.schedulerClient = executor.schedulerClient
         this.executor = executor
     }
@@ -42,10 +52,10 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     @CompileDynamic
     private void extractValue(
-            List<Object> booleanInputs,
-            List<Object> numberInputs,
-            List<Object> stringInputs,
-            List<Object> fileInputs,
+            List<Map<String,Object>> booleanInputs,
+            List<Map<String,Object>> numberInputs,
+            List<Map<String,String>> stringInputs,
+            List<Map<String,Object>> fileInputs,
             String key,
             Object input
     ){
@@ -73,20 +83,30 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
             log.error ( "input was of class ${input.class}: $input")
             throw new IllegalArgumentException( "Task input was of class and cannot be parsed: ${input.class}: $input" )
         }
+    }
 
+    private long calculateInputSize( List<Map<String,Object>> fileInputs ){
+        return fileInputs
+                .parallelStream()
+                .mapToLong {
+                    final File file = new File(( it.value as Map<String,String>).storePath )
+                    return file.directory ? file.directorySize() : file.length()
+                }.sum()
     }
 
     private Map registerTask(){
 
-        final List<Object> booleanInputs = new LinkedList<>()
-        final List<Object> numberInputs = new LinkedList<>()
-        final List<Object> stringInputs = new LinkedList<>()
-        final List<Object> fileInputs = new LinkedList<>()
+        final List<Map<String,Object>> booleanInputs = new LinkedList<>()
+        final List<Map<String,Object>> numberInputs = new LinkedList<>()
+        final List<Map<String,String>> stringInputs = new LinkedList<>()
+        final List<Map<String,Object>> fileInputs = new LinkedList<>()
 
         for ( entry in task.getInputs() ){
             extractValue( booleanInputs, numberInputs, stringInputs, fileInputs, entry.getKey().name , entry.getValue() )
         }
 
+
+        inputSize = calculateInputSize(fileInputs)
         Map config = [
                 runName : "nf-${task.hash}",
                 inputs : [
@@ -103,8 +123,15 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
                 memoryInBytes : task.config.getMemory()?.toBytes(),
                 workDir : task.getWorkDirStr(),
                 repetition : task.failCount,
+                inputSize : inputSize
         ]
         return schedulerClient.registerTask( config, task.id.intValue() )
+    }
+
+    protected BashWrapperBuilder createBashWrapper(TaskRun task) {
+        return fusionEnabled()
+                ? fusionLauncher()
+                : new CWSK8sWrapperBuilder( task, executor.getCWSConfig().memoryPredictor as boolean )
     }
 
     /**
@@ -122,6 +149,41 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         start = System.currentTimeMillis()
         super.submit()
         submitToK8sTime = System.currentTimeMillis() - start
+    }
+
+    @Override
+    boolean checkIfRunning() {
+        try {
+            return super.checkIfRunning()
+        } catch ( Exception e) {
+            log.error("Error checking if task is running", e)
+            throw e
+        }
+    }
+
+    @Override
+    boolean checkIfCompleted() {
+        Map state = getState()
+        if( !state || !state.terminated ) {
+            return false
+        }
+        if( executor.getCWSConfig().memoryPredictor ) {
+            memoryAdapted = client.getAdaptedPodMemory( podName )
+            if ( memoryAdapted != null ) {
+                //only use a special failure logic if the memory was adapted
+                if (state.terminated.exitCode == 128
+                        && (state.terminated.reason as String) == "StartError") {
+                    failedOOM = true
+                    log.info("The memory was choosen too small for the pod ${podName} to be started. More memory is tried next time.")
+                    task.error = new MemoryScalingFailure()
+                } else if ((state.terminated.reason as String) == "OOMKilled") {
+                    failedOOM = true
+                    log.info("The memory was choosen too small for the pod ${podName} to be executed. More memory is tried next time.")
+                    task.error = new MemoryScalingFailure()
+                }
+            }
+        }
+        return super.checkIfCompleted()
     }
 
     private void parseSchedulerTraceFile( Path file, TraceRecord traceRecord ) {
@@ -176,11 +238,37 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
+    protected void deletePodIfSuccessful(TaskRun task) {
+        if ( executor.getCWSConfig().memoryPredictor ){
+            TraceRecord traceRecord = super.getTraceRecord()
+            Map<String,Object> metrics = [
+                    ramRequest  : traceRecord.get( "memory" ),
+                    peakVmem    : traceRecord.get( "peak_vmem" ),
+                    peakRss     : traceRecord.get( "peak_rss" ),
+                    realtime   : traceRecord.get( "realtime" ),
+            ]
+            schedulerClient.submitMetrics( metrics, task.id.intValue() )
+        }
+
+        // would not have been cleaned in the super method
+        if( !cleanupDisabled() && failedOOM ){
+            try {
+                client.podDelete(podName)
+            } catch( Exception e ) {
+                log.warn "Unable to cleanup: $podName -- see the log file for details", e
+            }
+        }
+
+        super.deletePodIfSuccessful( task )
+    }
+
     @Override
     TraceRecord getTraceRecord() {
         final TraceRecord traceRecord = super.getTraceRecord()
-        traceRecord.put(  "submit_to_scheduler_time", submitToSchedulerTime )
-        traceRecord.put(  "submit_to_k8s_time", submitToK8sTime )
+        traceRecord.put( "submit_to_scheduler_time", submitToSchedulerTime )
+        traceRecord.put( "submit_to_k8s_time", submitToK8sTime )
+        traceRecord.put( "memory_adapted", memoryAdapted )
+        traceRecord.put( "input_size", inputSize )
 
         Path file = task.workDir?.resolve( CMD_TRACE_SCHEDULER )
         try {

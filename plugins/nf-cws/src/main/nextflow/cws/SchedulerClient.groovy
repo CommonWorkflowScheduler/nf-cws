@@ -65,6 +65,19 @@ class SchedulerClient {
         log.trace "Delete scheduler code was: ${responseCode}"
     }
 
+    void submitMetrics( Map metrics, int id ){
+        HttpURLConnection post = new URL("${getDNS()}/scheduler/$runName/metrics/task/$id").openConnection() as HttpURLConnection
+        post.setRequestMethod( "POST" )
+        String message = JsonOutput.toJson( metrics )
+        post.setDoOutput(true)
+        post.setRequestProperty("Content-Type", "application/json")
+        post.getOutputStream().write(message.getBytes("UTF-8"))
+        int responseCode = post.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while submitting metrics" )
+        }
+    }
+
     Map registerTask( Map config, int id ){
 
         HttpURLConnection post = new URL("${getDNS()}/scheduler/$runName/task/$id").openConnection() as HttpURLConnection

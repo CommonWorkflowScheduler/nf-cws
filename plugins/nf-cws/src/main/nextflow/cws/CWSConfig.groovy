@@ -1,6 +1,7 @@
 package nextflow.cws
 
 import groovy.transform.CompileStatic
+import nextflow.util.MemoryUnit
 
 @CompileStatic
 class CWSConfig {
@@ -18,6 +19,16 @@ class CWSConfig {
     String getCostFunction() { target.costFunction as String }
 
     String getMemoryPredictor() { target.memoryPredictor as String }
+
+    MemoryUnit getMaxMemory() {
+        String s = target.maxMemory as String
+        return s ? new MemoryUnit(s) : null
+    }
+
+    MemoryUnit getMinMemory() {
+        String s = target.minMemory as String
+        return s ? new MemoryUnit(s) : null
+    }
 
     int getBatchSize() {
         String s = target.batchSize as String
