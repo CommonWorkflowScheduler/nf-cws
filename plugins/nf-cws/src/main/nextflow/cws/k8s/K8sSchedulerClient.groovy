@@ -41,7 +41,7 @@ class K8sSchedulerClient extends SchedulerClient {
     }
 
     protected String getDNS(){
-        return super.getDNS() ?: "http://${ip}:${schedulerConfig.getPort()}/v1/"
+        return super.getDNS() ?: "http://${ip}:${schedulerConfig.getPort()}/v1"
     }
 
     @Override

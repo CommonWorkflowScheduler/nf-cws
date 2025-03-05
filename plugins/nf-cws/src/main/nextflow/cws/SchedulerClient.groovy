@@ -23,7 +23,7 @@ class SchedulerClient {
     }
 
     protected String getDNS() {
-        return dns ? dns + "/v1/" : null
+        return dns ? dns + "/v1" : null
     }
 
     synchronized void registerScheduler( Map data ) {
