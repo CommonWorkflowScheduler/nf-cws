@@ -8,10 +8,14 @@ mm =
 endif 
 
 clean:
+	rm -rf .nextflow*
+	rm -rf work
+	rm -rf build
+	rm -rf plugins/*/build
 	./gradlew clean
 
 compile:
-	./gradlew compileGroovy
+	./gradlew :nextflow:exportClasspath compileGroovy
 	@echo "DONE `date`"
 
 
@@ -32,7 +36,7 @@ deps-all:
 # Refresh SNAPSHOTs dependencies
 #
 refresh:
-	./gradlew --refresh-dependencies 
+	./gradlew --refresh-dependencies
 
 #
 # Run all tests or selected ones
@@ -43,6 +47,9 @@ ifndef class
 else
 	./gradlew ${mm}test --tests ${class}
 endif
+
+assemble:
+	./gradlew assemble
 
 #
 # generate build zips under build/plugins
