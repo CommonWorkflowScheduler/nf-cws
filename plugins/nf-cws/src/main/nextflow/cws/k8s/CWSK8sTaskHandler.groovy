@@ -31,6 +31,10 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private String memoryAdapted = null
 
+    private String syntheticPodName = null
+
+    private Map precomputedSubmitRequest = null
+
     private long inputSize = -1
 
     private boolean failedOOM = false
@@ -42,11 +46,27 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         this.executor = executor
     }
 
+    protected void precomputeK8sSubmitRequest(TaskRun task) {
+        if ( precomputedSubmitRequest != null ) {
+            throw IllegalStateException("K8s submit request may only be precomputed once")
+        }
+        precomputedSubmitRequest = super.newSubmitRequest(task)
+    }
+
+    @Override
+    protected Map newSubmitRequest(TaskRun task) {
+        if (precomputedSubmitRequest != null) {
+            return precomputedSubmitRequest
+        }
+        super.newSubmitRequest(task)
+    }
+
     protected Map newSubmitRequest0(TaskRun task, String imageName) {
         Map<String, Object> pod = super.newSubmitRequest0(task, imageName)
         if ( (k8sConfig as CWSK8sConfig)?.getScheduler() ){
             (pod.spec as Map).schedulerName = (k8sConfig as CWSK8sConfig).getScheduler().getName() + "-" + getRunName()
         }
+        syntheticPodName = pod.metadata.name
         return pod
     }
 
@@ -108,7 +128,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
         inputSize = calculateInputSize(fileInputs)
         Map config = [
-                runName : "nf-${task.hash}",
+                runName : syntheticPodName,
                 inputs : [
                         booleanInputs : booleanInputs,
                         numberInputs  : numberInputs,
@@ -142,13 +162,16 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     void submit() {
         executor.schedulerBatch?.startSubmit()
         long start = System.currentTimeMillis()
+        precomputeK8sSubmitRequest(task)
+        long calculateSubmitRequestTime = System.currentTimeMillis() - start
+        start = System.currentTimeMillis()
         if ( schedulerClient ) {
             registerTask()
         }
         submitToSchedulerTime = System.currentTimeMillis() - start
         start = System.currentTimeMillis()
         super.submit()
-        submitToK8sTime = System.currentTimeMillis() - start
+        submitToK8sTime = System.currentTimeMillis() - start + calculateSubmitRequestTime
     }
 
     @Override
