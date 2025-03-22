@@ -61,6 +61,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         super.newSubmitRequest(task)
     }
 
+    @Override
     protected Map newSubmitRequest0(TaskRun task, String imageName) {
         Map<String, Object> pod = super.newSubmitRequest0(task, imageName)
         if ( (k8sConfig as CWSK8sConfig)?.getScheduler() ){
