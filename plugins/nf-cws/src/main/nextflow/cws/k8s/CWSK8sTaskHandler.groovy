@@ -33,8 +33,6 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private String syntheticPodName = null
 
-    private Map precomputedSubmitRequest = null
-
     private long inputSize = -1
 
     private boolean failedOOM = false
@@ -44,21 +42,12 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         this.client = executor.getCWSK8sClient()
         this.schedulerClient = executor.schedulerClient
         this.executor = executor
-    }
-
-    protected void precomputeK8sSubmitRequest(TaskRun task) {
-        if ( precomputedSubmitRequest != null ) {
-            throw IllegalStateException("K8s submit request may only be precomputed once")
-        }
-        precomputedSubmitRequest = super.newSubmitRequest(task)
+        this.syntheticPodName = super.getSyntheticPodName(task)
     }
 
     @Override
-    protected Map newSubmitRequest(TaskRun task) {
-        if (precomputedSubmitRequest != null) {
-            return precomputedSubmitRequest
-        }
-        super.newSubmitRequest(task)
+    protected String getSyntheticPodName(TaskRun task) {
+        return syntheticPodName
     }
 
     @Override
@@ -67,7 +56,6 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         if ( (k8sConfig as CWSK8sConfig)?.getScheduler() ){
             (pod.spec as Map).schedulerName = (k8sConfig as CWSK8sConfig).getScheduler().getName() + "-" + getRunName()
         }
-        syntheticPodName = pod.metadata.name
         return pod
     }
 
@@ -163,16 +151,13 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     void submit() {
         executor.schedulerBatch?.startSubmit()
         long start = System.currentTimeMillis()
-        precomputeK8sSubmitRequest(task)
-        long calculateSubmitRequestTime = System.currentTimeMillis() - start
-        start = System.currentTimeMillis()
         if ( schedulerClient ) {
             registerTask()
         }
         submitToSchedulerTime = System.currentTimeMillis() - start
         start = System.currentTimeMillis()
         super.submit()
-        submitToK8sTime = System.currentTimeMillis() - start + calculateSubmitRequestTime
+        submitToK8sTime = System.currentTimeMillis() - start
     }
 
     @Override
