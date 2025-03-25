@@ -1,6 +1,8 @@
 package nextflow.cws
 
 import groovy.transform.CompileStatic
+import nextflow.cws.wow.fs.WOWFileSystemProvider
+import nextflow.file.FileHelper
 import nextflow.plugin.BasePlugin
 import nextflow.trace.TraceRecord
 import org.pf4j.PluginWrapper
@@ -40,6 +42,7 @@ class CWSPlugin extends BasePlugin {
     void start() {
         super.start()
         registerTraceFields()
+        FileHelper.getOrInstallProvider(WOWFileSystemProvider)
     }
 
 }
