@@ -16,6 +16,10 @@ class CWSPlugin extends BasePlugin {
 
     private static void registerTraceFields() {
         TraceRecord.FIELDS.putAll( [
+                infiles_time:                          'num',
+                outfiles_time:                         'num',
+                create_bash_wrapper_time:              'num',
+                create_request_time:                   'num',
                 submit_to_scheduler_time:              'num',
                 submit_to_k8s_time:                    'num',
                 scheduler_time_in_queue:               'num',
@@ -35,6 +39,19 @@ class CWSPlugin extends BasePlugin {
                 scheduler_delta_submitted_batch_end:   'num',
                 memory_adapted:                        'mem',
                 input_size:                            'num',
+                out_label:                             'str',
+                scheduler_files_bytes:                 'num',
+                scheduler_files_node_bytes:            'num',
+                scheduler_files_node_other_task_bytes: 'num',
+                scheduler_files:                       'num',
+                scheduler_files_node:                  'num',
+                scheduler_files_node_other_task:       'num',
+                scheduler_depending_task:              'num',
+                scheduler_location_count:              'num',
+                scheduler_nodes_to_copy_from:          'num',
+                scheduler_no_alignment_found:          'num',
+                scheduler_time_delta_phase_three:      'str',
+                scheduler_copy_tasks:                  'num',
         ] )
     }
 
