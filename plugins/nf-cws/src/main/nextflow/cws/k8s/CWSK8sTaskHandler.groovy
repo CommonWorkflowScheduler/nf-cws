@@ -31,6 +31,8 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private String memoryAdapted = null
 
+    private String syntheticPodName = null
+
     private long inputSize = -1
 
     private boolean failedOOM = false
@@ -40,8 +42,15 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         this.client = executor.getCWSK8sClient()
         this.schedulerClient = executor.schedulerClient
         this.executor = executor
+        this.syntheticPodName = super.getSyntheticPodName(task)
     }
 
+    @Override
+    protected String getSyntheticPodName(TaskRun task) {
+        return syntheticPodName
+    }
+
+    @Override
     protected Map newSubmitRequest0(TaskRun task, String imageName) {
         Map<String, Object> pod = super.newSubmitRequest0(task, imageName)
         if ( (k8sConfig as CWSK8sConfig)?.getScheduler() ){
@@ -108,7 +117,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
         inputSize = calculateInputSize(fileInputs)
         Map config = [
-                runName : "nf-${task.hash}",
+                runName : syntheticPodName,
                 inputs : [
                         booleanInputs : booleanInputs,
                         numberInputs  : numberInputs,
