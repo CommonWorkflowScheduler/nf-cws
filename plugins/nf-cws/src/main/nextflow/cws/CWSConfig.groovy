@@ -30,6 +30,10 @@ class CWSConfig {
         return s ? new MemoryUnit(s) : null
     }
 
+    Integer getMaxCopyTasksPerNode() { target.maxCopyTasksPerNode as Integer }
+
+    Integer getMaxWaitingCopyTasksPerNode() { target.maxWaitingCopyTasksPerNode as Integer }
+
     int getBatchSize() {
         String s = target.batchSize as String
         //Default: 1 -> No batching
