@@ -177,4 +177,60 @@ class SchedulerClient {
         }
     }
 
+    ///* File location */
+
+    Map getFileLocation( String path ){
+
+        String pathEncoded = URLEncoder.encode(path,'utf-8')
+        HttpURLConnection get = new URL("${getDNS()}/file/$runName?path=$pathEncoded").openConnection() as HttpURLConnection
+        get.setRequestMethod( "GET" )
+        get.setDoOutput(true)
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while requesting file location: $path (${get.responseMessage})" )
+        }
+        Map response = new JsonSlurper().parse(get.getInputStream()) as Map
+        return response
+
+    }
+
+    String getDaemonOnNode( String node ){
+
+        HttpURLConnection get = new URL("${getDNS()}/daemon/$runName/$node").openConnection() as HttpURLConnection
+        get.setRequestMethod( "GET" )
+        get.setDoOutput(true)
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while requesting daemon on node: $node" )
+        }
+        String response = new JsonSlurper().parse(get.getInputStream()) as String
+        return response
+
+    }
+
+    void addFileLocation( String path, long size, long timestamp, long locationWrapperID, boolean overwrite, String node = null ){
+
+        String method = overwrite ? 'overwrite' : 'add'
+
+        HttpURLConnection get = new URL("${getDNS()}/file/$runName/location/${method}${ node ? "/$node" : ''}").openConnection() as HttpURLConnection
+        get.setRequestMethod( "POST" )
+        get.setDoOutput(true)
+        Map data = [
+                path      : path,
+                size      : size,
+                timestamp : timestamp,
+                locationWrapperID : locationWrapperID
+        ]
+        if ( node ){
+            data.node = node
+        }
+        String message = JsonOutput.toJson( data )
+        get.setRequestProperty("Content-Type", "application/json")
+        get.getOutputStream().write(message.getBytes("UTF-8"));
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while updating file location: $path: $node (${get.responseMessage})" )
+        }
+
+    }
 }

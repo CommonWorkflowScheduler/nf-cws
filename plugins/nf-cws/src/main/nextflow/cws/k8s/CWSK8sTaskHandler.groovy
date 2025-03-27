@@ -84,6 +84,8 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
             booleanInputs.add( [ name : key, value : input] )
         } else if ( input instanceof Number ) {
             numberInputs.add( [ name : key, value : input] )
+        } else if ( input instanceof Character ) {
+            stringInputs.add( [ name : key, value : input as String] )
         } else if ( input instanceof String ) {
             stringInputs.add( [ name : key, value : input] )
         } else if ( input instanceof GStringImpl ) {
@@ -137,7 +139,12 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         return schedulerClient.registerTask( config, task.id.intValue() )
     }
 
+    @Override
     protected BashWrapperBuilder createBashWrapper(TaskRun task) {
+        CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
+        if ( cwsK8sConfig?.locationAwareScheduling() ) {
+            return new WOWK8sWrapperBuilder( task , cwsK8sConfig.getStorage() )
+        }
         return fusionEnabled()
                 ? fusionLauncher()
                 : new CWSK8sWrapperBuilder( task, executor.getCWSConfig().memoryPredictor as boolean )
@@ -213,12 +220,14 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
                 continue
             switch( name ) {
                 case "scheduler_nodes_cost" :
-                case "scheduler_init_throughput":
                     traceRecord.put( name, value )
                     break
                 case "scheduler_best_cost" :
                     double val = parseDouble( value, file, name )
                     traceRecord.put( name, val )
+                    break
+                case "input_size" :
+                    traceRecord.put( name, inputSize )
                     break
                 default:
                     long val = parseLong( value, file, name )
