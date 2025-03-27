@@ -4,6 +4,7 @@ import groovy.transform.PackageScope
 import groovy.util.logging.Slf4j
 import nextflow.Session
 import nextflow.cws.wow.file.WOWFileHelper
+import nextflow.cws.wow.file.LocalFileWalker
 import nextflow.exception.MissingFileException
 import nextflow.executor.Executor
 import nextflow.file.FilePatternSplitter

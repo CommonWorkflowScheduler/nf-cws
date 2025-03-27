@@ -56,6 +56,9 @@ assemble:
 # you can install the plugin copying manually these files to $HOME/.nextflow/plugins
 #
 buildPlugins:
+	# TODO: add targets
+	# clang -static -target arm-linux-gnu plugins/nf-cws/src/resources/nf-cws/getStatsAndResolveSymlinks.c -o plugins/nf-cws/src/resources/nf-cws/getStatsAndResolveSymlinks_linux_aarch86
+	clang -static -target x86_64-linux-gnu plugins/nf-cws/src/resources/nf-cws/getStatsAndResolveSymlinks.c -o plugins/nf-cws/src/resources/nf-cws/getStatsAndResolveSymlinks_linux_x86
 	./gradlew copyPluginZip
 
 #

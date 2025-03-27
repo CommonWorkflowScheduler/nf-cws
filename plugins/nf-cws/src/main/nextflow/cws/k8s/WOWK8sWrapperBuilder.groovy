@@ -92,7 +92,9 @@ class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
     protected String getLaunchCommand(String interpreter, String env) {
         String cmd = ''
         if( storage && localWorkDir ){
-            cmd += "local INFILESTIME=\$(/etc/nextflow/${statFileName} infiles \"${workDir.toString()}/.command.infiles\" \"${getStorageLocalWorkDir()}\" \"\$PWD/\" || true)\n"
+            cmd += "cp -u \"/etc/nextflow/${statFileName}\" \"${getStorageLocalWorkDir()}\"\n"
+            cmd += "chmod +x \"${getStorageLocalWorkDir()}/${statFileName}\"\n"
+            cmd += "local INFILESTIME=\$(\"${getStorageLocalWorkDir()}/${statFileName}\" infiles \"${workDir.toString()}/.command.infiles\" \"${getStorageLocalWorkDir()}\" \"\$PWD/\" || true)\n"
         }
         cmd += super.getLaunchCommand(interpreter, env)
         if( storage && localWorkDir && isTraceRequired() ){
@@ -108,7 +110,8 @@ class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
         String cmd = super.getCleanupCmd( scratch )
         if( storage && localWorkDir ){
             cmd += "mkdir -p \"${localWorkDir.toString()}/\" || true\n"
-            cmd += "local OUTFILESTIME=\$(/etc/nextflow/${statFileName} outfiles \"${workDir.toString()}/.command.outfiles\" \"${getStorageLocalWorkDir()}\" \"${localWorkDir.toString()}/\" || true)\n"
+            cmd += "\"${getStorageLocalWorkDir()}/${statFileName}\" outfiles \"${workDir.toString()}/.command.outfiles\" \"${getStorageLocalWorkDir()}\" \"${localWorkDir.toString()}/\" > \"${localWorkDir.toString()}/.command.getStatsOut\" 2> \"${localWorkDir.toString()}/.command.getStatsErr\"\n"
+            cmd += "local OUTFILESTIME=\$(\"${getStorageLocalWorkDir()}/${statFileName}\" outfiles \"${workDir.toString()}/.command.outfiles\" \"${getStorageLocalWorkDir()}\" \"${localWorkDir.toString()}/\" || true)\n"
             if ( isTraceRequired() ) {
                 cmd += "echo \"outfiles_time=\${OUTFILESTIME}\" >> ${workDir.resolve(TaskRun.CMD_TRACE)}"
             }
