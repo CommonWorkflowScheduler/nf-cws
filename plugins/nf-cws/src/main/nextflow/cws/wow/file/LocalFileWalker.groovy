@@ -1,7 +1,6 @@
 package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
-import nextflow.extension.FilesEx
 
 import java.nio.file.FileVisitOption
 import java.nio.file.FileVisitResult
@@ -111,7 +110,7 @@ class LocalFileWalker {
                 this.modificationDate = null
                 return
             }
-            this.link = data[ REAL_PATH ].isEmpty()
+            this.link = !data[ REAL_PATH ].isEmpty()
             this.size = data[ SIZE ] as Long
             this.fileType = data[ FILE_TYPE ]
             this.accessDate = DateParser.fileTimeFromString(data[ ACCESS_DATE ])

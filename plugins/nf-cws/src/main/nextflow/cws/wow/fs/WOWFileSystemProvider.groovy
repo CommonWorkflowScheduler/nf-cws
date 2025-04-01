@@ -1,11 +1,14 @@
 package nextflow.cws.wow.fs
 
+import nextflow.cws.k8s.localdata.LocalPath
+
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.AccessMode
 import java.nio.file.CopyOption
 import java.nio.file.DirectoryStream
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
+import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.OpenOption
 import java.nio.file.Path
@@ -94,7 +97,11 @@ class WOWFileSystemProvider extends FileSystemProvider {
 
     @Override
     def <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> aClass, LinkOption... linkOptions) throws IOException {
-        throw new UnsupportedOperationException("Read attributes not supported by ${getScheme().toUpperCase()} file system provider")
+        if ( path instanceof LocalPath ) {
+            return path.getAttributes() as A
+        } else {
+            return Files.readAttributes(path, BasicFileAttributes.class, linkOptions) as A
+        }
     }
 
     @Override

@@ -99,7 +99,7 @@ class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
         cmd += super.getLaunchCommand(interpreter, env)
         if( storage && localWorkDir && isTraceRequired() ){
             cmd += "\nlocal exitCode=\$?"
-            cmd += """\necho \"infiles_time=\${INFILESTIME}" >> ${TaskRun.CMD_TRACE}\n"""
+            cmd += """\necho \"infiles_time=\${INFILESTIME}" >> ${workDir.resolve(TaskRun.CMD_TRACE)}\n"""
             cmd += "return \$exitCode\n"
         }
         return cmd
@@ -110,7 +110,6 @@ class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
         String cmd = super.getCleanupCmd( scratch )
         if( storage && localWorkDir ){
             cmd += "mkdir -p \"${localWorkDir.toString()}/\" || true\n"
-            cmd += "\"${getStorageLocalWorkDir()}/${statFileName}\" outfiles \"${workDir.toString()}/.command.outfiles\" \"${getStorageLocalWorkDir()}\" \"${localWorkDir.toString()}/\" > \"${localWorkDir.toString()}/.command.getStatsOut\" 2> \"${localWorkDir.toString()}/.command.getStatsErr\"\n"
             cmd += "local OUTFILESTIME=\$(\"${getStorageLocalWorkDir()}/${statFileName}\" outfiles \"${workDir.toString()}/.command.outfiles\" \"${getStorageLocalWorkDir()}\" \"${localWorkDir.toString()}/\" || true)\n"
             if ( isTraceRequired() ) {
                 cmd += "echo \"outfiles_time=\${OUTFILESTIME}\" >> ${workDir.resolve(TaskRun.CMD_TRACE)}"

@@ -1,6 +1,7 @@
 package nextflow.cws.k8s.localdata
 
 import groovy.util.logging.Slf4j
+import nextflow.cws.wow.fs.WOWFileSystem
 import nextflow.file.FileHelper
 import nextflow.cws.wow.file.LocalFileWalker
 import nextflow.cws.k8s.K8sSchedulerClient
@@ -528,7 +529,7 @@ class LocalPath implements Path {
 
     @Override
     FileSystem getFileSystem() {
-        LocalFileSystem.INSTANCE
+        WOWFileSystem.INSTANCE
     }
 
     @Override
@@ -620,7 +621,7 @@ class LocalPath implements Path {
 
     @Override
     URI toUri() {
-        path.toUri()
+        return getFileSystem().provider().getScheme() + "://" + path.toAbsolutePath() as URI
     }
 
     Path toAbsolutePath(){
