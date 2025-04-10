@@ -1,4 +1,4 @@
-package nextflow.cws.wow.fs
+package nextflow.cws.wow.file
 
 import java.nio.file.FileStore
 import java.nio.file.FileSystem

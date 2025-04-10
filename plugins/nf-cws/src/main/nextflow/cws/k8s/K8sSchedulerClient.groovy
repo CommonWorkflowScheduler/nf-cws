@@ -3,7 +3,7 @@ package nextflow.cws.k8s
 import groovy.util.logging.Slf4j
 import nextflow.cws.CWSConfig
 import nextflow.cws.SchedulerClient
-import nextflow.cws.k8s.localdata.LocalPath
+import nextflow.cws.wow.file.LocalPath
 import nextflow.cws.wow.file.LocalFileWalker
 import nextflow.exception.NodeTerminationException
 import nextflow.k8s.K8sConfig
@@ -43,6 +43,7 @@ class K8sSchedulerClient extends SchedulerClient {
         this.k8sConfig = k8sConfig
         this.schedulerConfig = schedulerConfig
         this.namespace = namespace ?: 'default'
+        LocalPath.setClient(this)
         LocalFileWalker.createLocalPath = (Path path, LocalFileWalker.FileAttributes attr, Path workDir) -> LocalPath.toLocalPath( path, attr, workDir )
     }
 

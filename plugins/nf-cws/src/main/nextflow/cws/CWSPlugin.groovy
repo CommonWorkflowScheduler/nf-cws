@@ -1,7 +1,7 @@
 package nextflow.cws
 
 import groovy.transform.CompileStatic
-import nextflow.cws.wow.fs.WOWFileSystemProvider
+import nextflow.cws.wow.file.WOWFileSystemProvider
 import nextflow.file.FileHelper
 import nextflow.plugin.BasePlugin
 import nextflow.trace.TraceRecord

@@ -1,9 +1,7 @@
-package nextflow.cws.k8s.localdata
+package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
-import nextflow.cws.wow.fs.WOWFileSystem
 import nextflow.file.FileHelper
-import nextflow.cws.wow.file.LocalFileWalker
 import nextflow.cws.k8s.K8sSchedulerClient
 import org.codehaus.groovy.runtime.IOGroovyMethods
 import sun.net.ftp.FtpClient
@@ -35,6 +33,10 @@ class LocalPath implements Path {
         this.workDir = null
     }
 
+    Path getInner() {
+        return path
+    }
+
     LocalPath toLocalPath( Path path, LocalFileWalker.FileAttributes attributes = null ){
         toLocalPath( path, attributes, workDir )
     }
@@ -48,8 +50,16 @@ class LocalPath implements Path {
         else throw new IllegalStateException("Client was already set.")
     }
 
-    private FtpClient getConnection( final String node, String daemon ){
+    static InputStream getFileStream(final String node, String daemon, String path) {
+        URL url = new URL("ftp://$daemon/$path")
+        URLConnection con = url.openConnection()
+        InputStream is = con.getInputStream()
+        return is
+    }
+
+    static FtpClient getConnection(final String node, String daemon ){
         int trial = 0
+        log.info("FRIEDRICH $node -- $daemon")
         while ( true ) {
             try {
                 FtpClient ftpClient = FtpClient.create(daemon)
@@ -65,7 +75,7 @@ class LocalPath implements Path {
         }
     }
 
-    private Map getLocation( String absolutePath ){
+    Map getLocation( String absolutePath ){
         Map response = client.getFileLocation( absolutePath )
         synchronized ( createSymlinkHelper ) {
             if ( !createdSymlinks ) {
@@ -154,8 +164,8 @@ class LocalPath implements Path {
             log.trace("Read locally $absolutePath")
             return path.getBytes()
         }
-        try (FtpClient ftpClient = getConnection(location.node as String, location.daemon as String)) {
-            try (InputStream fileStream = ftpClient.getFileStream( location.path as String )) {
+        try (FtpClient ftpClient = getConnection(location.node.toString(), location.daemon.toString())) {
+            try (InputStream fileStream = ftpClient.getFileStream( location.path.toString() )) {
                 log.trace("Read remote $absolutePath")
                 return fileStream.getBytes()
             }
@@ -183,8 +193,8 @@ class LocalPath implements Path {
             log.trace("Read locally $absolutePath")
             return path.withReader( charset, closure )
         }
-        try (FtpClient ftpClient = getConnection( location.node as String , location.daemon as String )) {
-            try (InputStream fileStream = ftpClient.getFileStream( location.path as String )) {
+        try (FtpClient ftpClient = getConnection( location.node.toString() , location.daemon.toString() )) {
+            try (InputStream fileStream = ftpClient.getFileStream( location.path.toString() )) {
                 log.trace("Read remote $absolutePath")
                 return IOGroovyMethods.withReader(fileStream, closure)
             }
@@ -244,8 +254,8 @@ class LocalPath implements Path {
             log.trace("Read locally $absolutePath")
             return path.eachLine( charset, firstLine, closure )
         }
-        try (FtpClient ftpClient = getConnection( location.node as String, location.daemon as String )) {
-            try (InputStream fileStream = ftpClient.getFileStream( location.path as String )) {
+        try (FtpClient ftpClient = getConnection( location.node.toString(), location.daemon.toString() )) {
+            try (InputStream fileStream = ftpClient.getFileStream( location.path.toString() )) {
                 log.trace("Read remote $absolutePath")
                 return IOGroovyMethods.eachLine( fileStream, charset, firstLine, closure )
             }
@@ -263,8 +273,8 @@ class LocalPath implements Path {
             log.trace("Read locally $absolutePath")
             return path.newReader()
         }
-        try (FtpClient ftpClient = getConnection( location.node as String , location.daemon as String )) {
-            InputStream fileStream = ftpClient.getFileStream( location.path as String )
+        try (FtpClient ftpClient = getConnection( location.node.toString() , location.daemon.toString() )) {
+            InputStream fileStream = ftpClient.getFileStream( location.path.toString() )
             log.trace("Read remote $absolutePath")
             InputStreamReader isr = new InputStreamReader( fileStream, charset )
             return new BufferedReader(isr)
@@ -316,8 +326,8 @@ class LocalPath implements Path {
             log.trace("Read locally $absolutePath")
             return path.eachByte( closure )
         }
-        try (FtpClient ftpClient = getConnection( location.node as String , location.daemon as String )) {
-            try (InputStream fileStream = ftpClient.getFileStream( location.path as String )) {
+        try (FtpClient ftpClient = getConnection( location.node.toString() , location.daemon.toString() )) {
+            try (InputStream fileStream = ftpClient.getFileStream( location.path.toString() )) {
                 log.trace("Read remote $absolutePath")
                 return IOGroovyMethods.eachByte( new BufferedInputStream( fileStream ), closure)
             }
@@ -331,8 +341,8 @@ class LocalPath implements Path {
             log.trace("Read locally $absolutePath")
             return path.eachByte( bufferLen, closure )
         }
-        try (FtpClient ftpClient = getConnection( location.node as String , location.daemon as String )) {
-            try (InputStream fileStream = ftpClient.getFileStream( location.path as String )) {
+        try (FtpClient ftpClient = getConnection( location.node.toString() , location.daemon.toString() )) {
+            try (InputStream fileStream = ftpClient.getFileStream( location.path.toString() )) {
                 log.trace("Read remote $absolutePath")
                 return IOGroovyMethods.eachByte( new BufferedInputStream( fileStream ), bufferLen, closure)
             }
@@ -346,8 +356,8 @@ class LocalPath implements Path {
             log.trace("Read locally $absolutePath")
             return path.withInputStream( closure )
         }
-        try (FtpClient ftpClient = getConnection( location.node as String , location.daemon as String )) {
-            InputStream fileStream = ftpClient.getFileStream( location.path as String )
+        try (FtpClient ftpClient = getConnection( location.node.toString() , location.daemon.toString() )) {
+            InputStream fileStream = ftpClient.getFileStream( location.path.toString() )
             log.trace("Read remote $absolutePath")
             return IOGroovyMethods.withStream(new BufferedInputStream( fileStream ), closure)
         }
@@ -371,8 +381,8 @@ class LocalPath implements Path {
             log.trace("Read locally $absolutePath")
             return path.newInputStream()
         }
-        try (FtpClient ftpClient = getConnection( location.node as String , location.daemon as String )) {
-            InputStream fileStream = ftpClient.getFileStream( location.path as String )
+        try (FtpClient ftpClient = getConnection( location.node.toString() , location.daemon.toString() )) {
+            InputStream fileStream = ftpClient.getFileStream( location.path.toString() )
             log.trace("Read remote $absolutePath")
             return new BufferedInputStream( fileStream )
         }
@@ -450,7 +460,7 @@ class LocalPath implements Path {
         def loc = client.getFileLocation( absolutePath )
     }
 
-    private Map download(){
+    Map download(){
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         synchronized ( this ) {
@@ -458,24 +468,20 @@ class LocalPath implements Path {
                 log.trace("No download")
                 return [ wasDownloaded : false, location : location ]
             }
-            try (FtpClient ftpClient = getConnection(location.node as String, location.daemon as String )) {
-                try (InputStream fileStream = ftpClient.getFileStream( location.path as String )) {
-                    log.trace("Download remote $absolutePath")
-                    final def file = toFile()
-                    path.parent.toFile().mkdirs()
-                    OutputStream outStream = new FileOutputStream(file)
-                    byte[] buffer = new byte[8 * 1024]
-                    int bytesRead
-                    while ((bytesRead = fileStream.read(buffer)) != -1) {
-                        outStream.write(buffer, 0, bytesRead)
-                    }
-                    fileStream.closeQuietly()
-                    outStream.closeQuietly()
-                    this.wasDownloaded = true
-                    return [ wasDownloaded : true, location : location ]
-                } catch (Exception e) {
-                    throw e
+            try (InputStream fileStream = getFileStream( location.node.toString(), location.daemon.toString(), location.path.toString() )) {
+                log.trace("Download remote $absolutePath")
+                final def file = toFile()
+                path.parent.toFile().mkdirs()
+                OutputStream outStream = new FileOutputStream(file)
+                byte[] buffer = new byte[8 * 1024]
+                int bytesRead
+                while ((bytesRead = fileStream.read(buffer)) != -1) {
+                    outStream.write(buffer, 0, bytesRead)
                 }
+                fileStream.close()
+                outStream.close()
+                this.wasDownloaded = true
+                return [ wasDownloaded : true, location : location ]
             } catch (Exception e) {
                 throw e
             }
@@ -498,10 +504,10 @@ class LocalPath implements Path {
         Object result = path.invokeMethod(name, args)
         if( lastModified != file.lastModified() ){
             //Update location in scheduler (overwrite all others)
-            client.addFileLocation( downloadResult.location.path as String , file.size(), file.lastModified(), downloadResult.location.locationWrapperID as long, true )
+            client.addFileLocation( downloadResult.location.path.toString() , file.size(), file.lastModified(), downloadResult.location.locationWrapperID as long, true )
         } else if ( downloadResult.wasDownloaded ){
             //Add location to scheduler
-            client.addFileLocation( downloadResult.location.path as String , file.size(), file.lastModified(), downloadResult.location.locationWrapperID as long, false )
+            client.addFileLocation( downloadResult.location.path.toString() , file.size(), file.lastModified(), downloadResult.location.locationWrapperID as long, false )
         }
         return result
     }

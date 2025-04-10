@@ -1,4 +1,4 @@
-package nextflow.cws.k8s.localdata
+package nextflow.cws.wow.file
 
 import java.nio.file.Path
 

@@ -1,6 +1,7 @@
-package nextflow.cws.wow.fs
+package nextflow.cws.wow.file
 
-import nextflow.cws.k8s.localdata.LocalPath
+import groovy.util.logging.Slf4j
+import sun.net.ftp.FtpClient
 
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.AccessMode
@@ -17,6 +18,7 @@ import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 
+@Slf4j
 class WOWFileSystemProvider extends FileSystemProvider {
 
     static final WOWFileSystemProvider INSTANCE = new WOWFileSystemProvider()
@@ -43,7 +45,11 @@ class WOWFileSystemProvider extends FileSystemProvider {
 
     @Override
     SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> set, FileAttribute<?>... fileAttributes) throws IOException {
-        throw new UnsupportedOperationException("Byte channel not supported by ${getScheme().toUpperCase()} file system provider")
+        LocalPath localPath = (LocalPath) path
+        // TODO: find an alternative to always downloading
+        Map downloadResult = localPath.download()
+        assert (downloadResult.wasDownloaded || downloadResult.location.sameAsEngine)
+        return Files.newByteChannel(localPath.getInner())
     }
 
     @Override
