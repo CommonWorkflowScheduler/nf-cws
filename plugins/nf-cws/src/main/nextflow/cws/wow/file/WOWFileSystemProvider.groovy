@@ -1,9 +1,12 @@
 package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
+import nextflow.file.FileSystemTransferAware
+import nextflow.file.http.XFileAttributes
 import sun.net.ftp.FtpClient
 
 import java.nio.channels.SeekableByteChannel
+import java.nio.file.AccessDeniedException
 import java.nio.file.AccessMode
 import java.nio.file.CopyOption
 import java.nio.file.DirectoryStream
@@ -19,7 +22,7 @@ import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 
 @Slf4j
-class WOWFileSystemProvider extends FileSystemProvider {
+class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTransferAware {
 
     static final WOWFileSystemProvider INSTANCE = new WOWFileSystemProvider()
 
@@ -94,6 +97,7 @@ class WOWFileSystemProvider extends FileSystemProvider {
 
     @Override
     void checkAccess(Path path, AccessMode... accessModes) throws IOException {
+        // TODO: re-check that this may be empty
     }
 
     @Override
@@ -118,5 +122,26 @@ class WOWFileSystemProvider extends FileSystemProvider {
     @Override
     void setAttribute(Path path, String s, Object o, LinkOption... linkOptions) throws IOException {
         throw new UnsupportedOperationException("Set attribute not supported by ${getScheme().toUpperCase()} file system provider")
+    }
+
+    @Override
+    boolean canUpload(Path source, Path target) {
+        return false
+    }
+
+    @Override
+    boolean canDownload(Path source, Path target) {
+        return true
+    }
+
+    @Override
+    void download(Path source, Path target, CopyOption... copyOptions) throws IOException {
+        log.warn("Work in progress: Implementation for downloading functionality may not be correct or complete in ${getScheme().toUpperCase()} file system provider")
+        // do nothing, as data downloading is handled by the WOW scheduler
+    }
+
+    @Override
+    void upload(Path source, Path target, CopyOption... copyOptions) throws IOException {
+        throw new UnsupportedOperationException("Uploading not supported by ${getScheme().toUpperCase()} file system provider")
     }
 }
