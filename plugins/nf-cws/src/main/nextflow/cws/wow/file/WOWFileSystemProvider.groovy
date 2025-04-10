@@ -2,11 +2,8 @@ package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
 import nextflow.file.FileSystemTransferAware
-import nextflow.file.http.XFileAttributes
-import sun.net.ftp.FtpClient
 
 import java.nio.channels.SeekableByteChannel
-import java.nio.file.AccessDeniedException
 import java.nio.file.AccessMode
 import java.nio.file.CopyOption
 import java.nio.file.DirectoryStream

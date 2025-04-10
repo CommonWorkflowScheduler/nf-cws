@@ -58,6 +58,7 @@ class LocalPath implements Path {
     }
 
     static FtpClient getConnection(final String node, String daemon ){
+        log.info("FRIEDRICH getConnection")
         int trial = 0
         log.info("FRIEDRICH $node -- $daemon")
         while ( true ) {
@@ -76,6 +77,7 @@ class LocalPath implements Path {
     }
 
     Map getLocation( String absolutePath ){
+        log.info("FRIEDRICH getLocation")
         Map response = client.getFileLocation( absolutePath )
         synchronized ( createSymlinkHelper ) {
             if ( !createdSymlinks ) {
@@ -129,6 +131,7 @@ class LocalPath implements Path {
     }
 
     String getText( String charset ){
+        log.info("FRIEDRICH getText")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         if ( wasDownloaded || location.sameAsEngine ){
@@ -148,6 +151,7 @@ class LocalPath implements Path {
     }
 
     void setText( String text, String charset ){
+        log.info("FRIEDRICH setText")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = client.getFileLocation( absolutePath )
         checkParentDirectoryExists()
@@ -158,6 +162,7 @@ class LocalPath implements Path {
     }
 
     byte[] getBytes(){
+        log.info("FRIEDRICH getBytes")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         if ( wasDownloaded || location.sameAsEngine ){
@@ -173,6 +178,7 @@ class LocalPath implements Path {
     }
 
     void setBytes( byte[] bytes ){
+        log.info("FRIEDRICH setBytes")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = client.getFileLocation( absolutePath )
         checkParentDirectoryExists()
@@ -187,6 +193,7 @@ class LocalPath implements Path {
     }
 
     Object withReader( String charset, Closure closure ){
+        log.info("FRIEDRICH withReader")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         if ( wasDownloaded || location.sameAsEngine ){
@@ -206,6 +213,7 @@ class LocalPath implements Path {
     }
 
     def <T> T withWriter( String charset, Closure<T> closure ) {
+        log.info("FRIEDRICH withWriter")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = client.getFileLocation( absolutePath )
         checkParentDirectoryExists()
@@ -217,6 +225,7 @@ class LocalPath implements Path {
     }
 
     def <T> T withPrintWriter( String charset, Closure<T> closure ){
+        log.info("FRIEDRICH withPrintWriter")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = client.getFileLocation( absolutePath )
         checkParentDirectoryExists()
@@ -248,6 +257,7 @@ class LocalPath implements Path {
     }
 
     public <T> T eachLine( String charset, int firstLine, Closure<T> closure ) throws IOException {
+        log.info("FRIEDRICH eachLine")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         if ( wasDownloaded || location.sameAsEngine ){
@@ -267,6 +277,7 @@ class LocalPath implements Path {
     }
 
     BufferedReader newReader( String charset ){
+        log.info("FRIEDRICH newReader")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         if ( wasDownloaded || location.sameAsEngine ){
@@ -298,6 +309,7 @@ class LocalPath implements Path {
     }
 
     BufferedWriter newWriter( String charset, boolean append, boolean writeBom ){
+        log.info("FRIEDRICH newWriter")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = client.getFileLocation( absolutePath )
         checkParentDirectoryExists()
@@ -309,6 +321,7 @@ class LocalPath implements Path {
     }
 
     PrintWriter newPrintWriter( String charset ){
+        log.info("FRIEDRICH newPrintWriter")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = client.getFileLocation( absolutePath )
         checkParentDirectoryExists()
@@ -320,6 +333,7 @@ class LocalPath implements Path {
     }
 
     public <T> T eachByte( Closure<T> closure ) throws IOException {
+        log.info("FRIEDRICH eachByte1")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         if ( wasDownloaded || location.sameAsEngine ){
@@ -335,6 +349,7 @@ class LocalPath implements Path {
     }
 
     public <T> T eachByte( int bufferLen, Closure<T> closure ) throws IOException {
+        log.info("FRIEDRICH eachByte2")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         if ( wasDownloaded || location.sameAsEngine ){
@@ -350,6 +365,7 @@ class LocalPath implements Path {
     }
 
     public <T> T withInputStream( Closure<T> closure) throws IOException {
+        log.info("FRIEDRICH withInputStream")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         if ( wasDownloaded || location.sameAsEngine ){
@@ -364,6 +380,7 @@ class LocalPath implements Path {
     }
 
     def <T> T withOutputStream( Closure<T> closure ){
+        log.info("FRIEDRICH withOutputStream")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = client.getFileLocation( absolutePath )
         checkParentDirectoryExists()
@@ -375,6 +392,7 @@ class LocalPath implements Path {
     }
 
     public BufferedInputStream newInputStream() throws IOException {
+        log.info("FRIEDRICH newInputStream")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         if ( wasDownloaded || location.sameAsEngine ){
@@ -389,6 +407,7 @@ class LocalPath implements Path {
     }
 
     BufferedOutputStream newOutputStream(){
+        log.info("FRIEDRICH newOutputStream")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = client.getFileLocation( absolutePath )
         checkParentDirectoryExists()
@@ -412,6 +431,7 @@ class LocalPath implements Path {
     }
 
     void write( String text, String charset, boolean writeBom ){
+        log.info("FRIEDRICH write")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = client.getFileLocation( absolutePath )
         checkParentDirectoryExists()
@@ -439,6 +459,7 @@ class LocalPath implements Path {
     }
 
     void append( Object text, String charset, boolean writeBom ){
+        log.info("FRIEDRICH append")
         if ( !text ) {
             return
         }
@@ -461,6 +482,7 @@ class LocalPath implements Path {
     }
 
     Map download(){
+        log.info("FRIEDRICH download")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
         synchronized ( this ) {
@@ -489,6 +511,7 @@ class LocalPath implements Path {
     }
 
     <T> T asType( Class<T> c ) {
+        log.info("FRIEDRICH asType")
         if ( c == Path.class ) return this
         if ( c == File.class ) return toFile()
         if ( c == String.class ) return toString()
@@ -498,6 +521,7 @@ class LocalPath implements Path {
 
     @Override
     Object invokeMethod(String name, Object args) {
+        log.info("FRIEDRICH invokeMethod")
         Map downloadResult = download()
         def file = path.toFile()
         def lastModified = file.lastModified()
