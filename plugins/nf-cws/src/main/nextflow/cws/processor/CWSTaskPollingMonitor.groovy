@@ -2,6 +2,10 @@ package nextflow.cws.processor
 
 import groovy.util.logging.Slf4j
 import nextflow.Session
+import nextflow.cws.wow.file.LocalFileWalker
+import nextflow.cws.wow.file.OfflineLocalPath
+import nextflow.cws.wow.file.WorkdirPath
+import nextflow.processor.TaskHandler
 import nextflow.processor.TaskPollingMonitor
 import nextflow.util.Duration
 
@@ -54,4 +58,14 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
         return pendingTasks
     }
 
+    @Override
+    protected void finalizeTask(TaskHandler handler) {
+        def workDir = handler.task.workDir
+        def helper = LocalFileWalker.createWorkdirHelper( workDir )
+        def attributes = new LocalFileWalker.FileAttributes(workDir)
+        OfflineLocalPath path = new WorkdirPath( workDir, attributes, workDir, helper )
+        handler.task.workDir = path
+        super.finalizeTask(handler)
+        helper.validate()
+    }
 }

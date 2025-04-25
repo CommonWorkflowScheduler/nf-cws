@@ -1,10 +1,6 @@
 package nextflow.cws.wow.file
 
-import java.nio.file.FileStore
-import java.nio.file.FileSystem
-import java.nio.file.Path
-import java.nio.file.PathMatcher
-import java.nio.file.WatchService
+import java.nio.file.*
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 
@@ -58,7 +54,14 @@ class WOWFileSystem extends FileSystem {
 
     @Override
     PathMatcher getPathMatcher(String s) {
-        throw new UnsupportedOperationException("Path matcher not supported by ${provider().getScheme().toUpperCase()} file system")
+        return new PathMatcher() {
+            private final def matcher = FileSystems.getDefault().getPathMatcher( s )
+            @Override
+            boolean matches(Path path) {
+                // Make this a Unix Path and use the default matcher
+                return matcher.matches( Path.of(path.toString()) )
+            }
+        }
     }
 
     @Override
