@@ -2,11 +2,7 @@ package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
 
-import java.nio.file.FileVisitOption
-import java.nio.file.FileVisitResult
-import java.nio.file.FileVisitor
 import java.nio.file.Files
-import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
@@ -24,40 +20,19 @@ class LocalFileWalker {
     static final int ACCESS_DATE = 6
     static final int MODIFICATION_DATE = 7
 
-    public static TriFunction createLocalPath
-
-    static Path walkFileTree(Path start,
-                             Set<FileVisitOption> options,
-                             int maxDepth,
-                             FileVisitor<? super Path> visitor,
-                             Path workDir
-    )
-    {
-
-        String parent = null
-        boolean skip = false
-
+    static WorkdirHelper createWorkdirHelper(Path start){
+        Map<Path,LocalPath> files = new HashMap<>()
+        Path rootPath = null
         File file = new File( start.toString() + File.separatorChar + ".command.outfiles" )
         String line
+        WorkdirHelper workdirHelper
         file.withReader { reader ->
+            line = reader.readLine()
+            rootPath = Paths.get(line.split(';')[ VIRTUAL_PATH ])
+            workdirHelper = new WorkdirHelper( rootPath, files )
             while ((line = reader.readLine()) != null) {
                 String[] data = line.split(';')
-
                 String path = data[ VIRTUAL_PATH ]
-
-                //If Symlink & not followLinks
-                //split path
-                //save it, and ignore everything at the path behind that
-
-                if ( parent && path.startsWith(parent) ) {
-                    if ( skip ) {
-                        log.trace "Skip $path"
-                        continue
-                    }
-                } else {
-                    skip = false
-                }
-
                 FileAttributes attributes = new FileAttributes( data )
                 Path currentPath = Paths.get(path)
                 if ( !attributes.local ) {
@@ -66,23 +41,14 @@ class LocalFileWalker {
                         Files.createDirectories( currentPath.getParent() )
                         Files.createSymbolicLink( currentPath, attributes.destination )
                     }
-                    Files.walkFileTree( currentPath, options, maxDepth, visitor)
                 } else {
-                    Path p = createLocalPath.apply( currentPath, attributes, workDir )
-                    if ( attributes.isDirectory() ) {
-                        def visitDirectory = visitor.preVisitDirectory( p, attributes )
-                        if( visitDirectory == FileVisitResult.SKIP_SUBTREE ){
-                            skip = true
-                            parent = path
-                        }
-                    } else {
-                        visitor.visitFile( p, attributes)
-                    }
+                    def localPath = new OfflineLocalPath(currentPath, attributes, start, workdirHelper)
+                    def pathOnSharedFs = start.resolve(rootPath.relativize(currentPath))
+                    files.put( pathOnSharedFs, localPath )
                 }
             }
+            return workdirHelper
         }
-
-        return start
     }
 
     static class FileAttributes implements BasicFileAttributes {
@@ -126,6 +92,18 @@ class LocalFileWalker {
             if ( !directory && !fileType.contains( 'file' ) ){
                 log.error( "Unknown type: $fileType" )
             }
+        }
+
+        FileAttributes( Path path ) {
+            directory = true
+            link = false
+            size = 4096
+            fileType = 'directory'
+            creationDate = FileTime.fromMillis( 0 )
+            accessDate = FileTime.fromMillis( 0 )
+            modificationDate = FileTime.fromMillis( 0 )
+            destination = path
+            local = false
         }
 
         @Override
@@ -177,40 +155,6 @@ class LocalFileWalker {
             destination
         }
 
-    }
-
-    static Path exists( final File outfile, final Path file, final Path workDir, final LinkOption option ){
-
-        String rootDirString
-        Scanner sc = new Scanner( outfile )
-        if( sc.hasNext() )
-            rootDirString = sc.next().split(";")[0]
-        else
-            return null
-
-        final Path rootDir = rootDirString as Path
-        final Path fakePath = WOWFileHelper.fakePath( file, rootDir )
-
-        //TODO ignore link
-        final Optional<Path> first = Files.lines( outfile.toPath() )
-                .parallel()
-                .map {line ->
-                    String[] data = line.split(';')
-                    Path currentPath = data[ VIRTUAL_PATH ] as Path
-                    log.trace "Compare $currentPath and $fakePath match: ${(currentPath == fakePath)}"
-                    return ( currentPath == fakePath )
-                            ? createLocalPath.apply( currentPath, new FileAttributes( data ), workDir )
-                            : null
-                }
-                .filter{ it != null }
-                .findFirst()
-
-        return first.isPresent() ? first.get() : null
-
-    }
-
-    static interface TriFunction {
-        Path apply( Path path, FileAttributes attributes, Path workDir );
     }
 
 }

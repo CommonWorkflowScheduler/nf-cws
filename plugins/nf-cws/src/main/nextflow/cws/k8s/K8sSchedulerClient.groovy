@@ -4,7 +4,6 @@ import groovy.util.logging.Slf4j
 import nextflow.cws.CWSConfig
 import nextflow.cws.SchedulerClient
 import nextflow.cws.wow.file.LocalPath
-import nextflow.cws.wow.file.LocalFileWalker
 import nextflow.exception.NodeTerminationException
 import nextflow.k8s.K8sConfig
 import nextflow.k8s.client.K8sResponseException
@@ -13,8 +12,8 @@ import nextflow.k8s.model.PodSecurityContext
 import nextflow.k8s.model.PodSpecBuilder
 import nextflow.k8s.model.PodVolumeClaim
 
-import java.nio.file.Path
 import java.nio.file.Paths
+
 @Slf4j
 class K8sSchedulerClient extends SchedulerClient {
 
@@ -44,7 +43,6 @@ class K8sSchedulerClient extends SchedulerClient {
         this.schedulerConfig = schedulerConfig
         this.namespace = namespace ?: 'default'
         LocalPath.setClient(this)
-        LocalFileWalker.createLocalPath = (Path path, LocalFileWalker.FileAttributes attr, Path workDir) -> LocalPath.toLocalPath( path, attr, workDir )
     }
 
     protected String getDNS(){

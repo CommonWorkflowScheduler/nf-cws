@@ -1,8 +1,8 @@
 package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
-import nextflow.file.FileHelper
 import nextflow.cws.k8s.K8sSchedulerClient
+import nextflow.file.FileHelper
 import org.codehaus.groovy.runtime.IOGroovyMethods
 import sun.net.ftp.FtpClient
 
@@ -13,7 +13,7 @@ import java.nio.file.attribute.BasicFileAttributes
 @Slf4j
 class LocalPath implements Path {
 
-    private final Path path
+    protected final Path path
     private transient final LocalFileWalker.FileAttributes attributes
     private static transient K8sSchedulerClient client = null
     private boolean wasDownloaded = false
@@ -21,7 +21,7 @@ class LocalPath implements Path {
     private boolean createdSymlinks = false
     private transient final Object createSymlinkHelper = new Object()
 
-    private LocalPath(Path path, LocalFileWalker.FileAttributes attributes, Path workDir ) {
+    protected LocalPath(Path path, LocalFileWalker.FileAttributes attributes, Path workDir ) {
         this.path = path
         this.attributes = attributes
         this.workDir = workDir

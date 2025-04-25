@@ -4,15 +4,7 @@ import groovy.util.logging.Slf4j
 import nextflow.file.FileSystemTransferAware
 
 import java.nio.channels.SeekableByteChannel
-import java.nio.file.AccessMode
-import java.nio.file.CopyOption
-import java.nio.file.DirectoryStream
-import java.nio.file.FileStore
-import java.nio.file.FileSystem
-import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.OpenOption
-import java.nio.file.Path
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
@@ -54,6 +46,10 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     DirectoryStream<Path> newDirectoryStream(Path path, DirectoryStream.Filter<? super Path> filter) throws IOException {
+        if ( path instanceof OfflineLocalPath && !(path as OfflineLocalPath).workdirHelper.isValidated() ) {
+            return (path as OfflineLocalPath).workdirHelper.getDirectoryStream( path )
+        }
+
         throw new UnsupportedOperationException("Directory stream not supported by ${getScheme().toUpperCase()} file system provider")
     }
 
