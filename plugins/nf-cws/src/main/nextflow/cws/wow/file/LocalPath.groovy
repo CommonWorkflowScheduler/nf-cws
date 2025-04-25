@@ -697,4 +697,20 @@ class LocalPath implements Path {
     BasicFileAttributes getAttributes(){
         attributes
     }
+
+    @Override
+    boolean equals(Object obj) {
+        if ( obj instanceof LocalPath ){
+            return path == ((LocalPath) obj).path
+        }
+        if ( obj instanceof Path ){
+            return path == obj
+        }
+        return false
+    }
+
+    @Override
+    int hashCode() {
+        return path.hashCode() * 2 + 1
+    }
 }
