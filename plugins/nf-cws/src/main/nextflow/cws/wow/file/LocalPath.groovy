@@ -2,7 +2,6 @@ package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
 import nextflow.cws.k8s.K8sSchedulerClient
-import nextflow.file.FileHelper
 import org.codehaus.groovy.runtime.IOGroovyMethods
 import sun.net.ftp.FtpClient
 
