@@ -658,7 +658,7 @@ class LocalPath implements Path {
 
     @Override
     File toFile() {
-        path.toFile()
+        new LocalFile( this )
     }
 
     @Override
