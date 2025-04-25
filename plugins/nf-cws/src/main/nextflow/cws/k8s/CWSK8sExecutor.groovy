@@ -24,6 +24,7 @@ import nextflow.util.Duration
 import nextflow.util.ServiceName
 import org.pf4j.ExtensionPoint
 
+import java.nio.file.Path
 import java.nio.file.Paths
 
 @Slf4j
@@ -296,4 +297,9 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
 
     }
 
+    @Override
+    boolean isForeignFile( Path path ) {
+        if ( path.getScheme() == 'wow' ) return false
+        return super.isForeignFile(path)
+    }
 }
