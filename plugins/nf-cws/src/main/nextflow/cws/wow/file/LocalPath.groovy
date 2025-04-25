@@ -512,7 +512,7 @@ class LocalPath implements Path {
 
     <T> T asType( Class<T> c ) {
         log.info("FRIEDRICH asType")
-        if ( c == Path.class ) return this
+        if ( c == Path.class || c == LocalPath.class ) return this
         if ( c == File.class ) return toFile()
         if ( c == String.class ) return toString()
         log.info("Invoke method asType $c on $this")
