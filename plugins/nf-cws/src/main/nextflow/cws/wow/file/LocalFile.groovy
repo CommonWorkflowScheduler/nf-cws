@@ -4,11 +4,11 @@ import java.nio.file.Path
 
 class LocalFile extends File {
 
-    private final LocalPath localPath;
+    private final LocalPath localPath
 
     LocalFile( LocalPath localPath ){
         super( localPath.toString() )
-        this.localPath = localPath;
+        this.localPath = localPath
     }
 
     @Override

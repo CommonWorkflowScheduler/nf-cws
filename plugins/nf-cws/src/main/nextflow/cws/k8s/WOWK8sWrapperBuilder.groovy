@@ -6,6 +6,7 @@ import nextflow.file.FileHelper
 import nextflow.k8s.K8sWrapperBuilder
 import nextflow.processor.TaskRun
 import nextflow.util.Escape
+
 import java.nio.file.Path
 
 /**

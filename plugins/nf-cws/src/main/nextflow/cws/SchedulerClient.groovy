@@ -226,7 +226,7 @@ class SchedulerClient {
         }
         String message = JsonOutput.toJson( data )
         get.setRequestProperty("Content-Type", "application/json")
-        get.getOutputStream().write(message.getBytes("UTF-8"));
+        get.getOutputStream().write(message.getBytes("UTF-8"))
         int responseCode = get.getResponseCode()
         if( responseCode != 200 ){
             throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while updating file location: $path: $node (${get.responseMessage})" )

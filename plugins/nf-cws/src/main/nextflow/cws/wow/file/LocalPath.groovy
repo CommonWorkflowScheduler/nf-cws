@@ -244,19 +244,19 @@ class LocalPath implements Path {
         IOGroovyMethods.readLines( newReader( charset ) )
     }
 
-    public <T> T eachLine( Closure<T> closure ) throws IOException {
+    <T> T eachLine( Closure<T> closure ) throws IOException {
         eachLine( Charset.defaultCharset().toString(), 1, closure )
     }
 
-    public <T> T eachLine( int firstLine, Closure<T> closure ) throws IOException {
+    <T> T eachLine( int firstLine, Closure<T> closure ) throws IOException {
         eachLine( Charset.defaultCharset().toString(), firstLine, closure )
     }
 
-    public <T> T eachLine( String charset, Closure<T> closure ) throws IOException {
+    <T> T eachLine( String charset, Closure<T> closure ) throws IOException {
         eachLine( charset, 1, closure )
     }
 
-    public <T> T eachLine( String charset, int firstLine, Closure<T> closure ) throws IOException {
+    <T> T eachLine( String charset, int firstLine, Closure<T> closure ) throws IOException {
         log.info("FRIEDRICH eachLine")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -332,7 +332,7 @@ class LocalPath implements Path {
         return printWriter
     }
 
-    public <T> T eachByte( Closure<T> closure ) throws IOException {
+    <T> T eachByte( Closure<T> closure ) throws IOException {
         log.info("FRIEDRICH eachByte1")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -348,7 +348,7 @@ class LocalPath implements Path {
         }
     }
 
-    public <T> T eachByte( int bufferLen, Closure<T> closure ) throws IOException {
+    <T> T eachByte( int bufferLen, Closure<T> closure ) throws IOException {
         log.info("FRIEDRICH eachByte2")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -364,7 +364,7 @@ class LocalPath implements Path {
         }
     }
 
-    public <T> T withInputStream( Closure<T> closure) throws IOException {
+    <T> T withInputStream( Closure<T> closure) throws IOException {
         log.info("FRIEDRICH withInputStream")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -391,7 +391,7 @@ class LocalPath implements Path {
         return rv
     }
 
-    public BufferedInputStream newInputStream() throws IOException {
+    BufferedInputStream newInputStream() throws IOException {
         log.info("FRIEDRICH newInputStream")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -684,9 +684,9 @@ class LocalPath implements Path {
     @Override
     int compareTo(Path other) {
         if ( other instanceof LocalPath ){
-            return path.compareTo( ((LocalPath) other).path )
+            return path <=> ((LocalPath) other).path
         }
-        path.compareTo( other )
+        path <=> other
     }
 
     @Override
