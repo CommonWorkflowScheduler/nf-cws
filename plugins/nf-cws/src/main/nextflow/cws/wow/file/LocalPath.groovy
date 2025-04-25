@@ -502,22 +502,11 @@ class LocalPath implements Path {
 
     <T> T asType( Class<T> c ) {
         log.info("FRIEDRICH asType")
-        if ( isSuperClass(getClass(), c) ) return this
-        if ( isSuperClass(LocalPath.class, c) ) return toFile()
+        if ( c.isAssignableFrom( getClass() ) ) return this
+        if ( c.isAssignableFrom( LocalPath.class ) ) return toFile()
         if ( c == String.class ) return toString()
         log.info("Invoke method asType $c on $this")
         return super.asType( c )
-    }
-
-    private static boolean isSuperClass(Class<?> clazz, Class<?> clazzToCheck) {
-        Class<?> current = clazz
-        while (current != null) {
-            if ( current == clazzToCheck ) {
-                return true
-            }
-            current = current.getSuperclass()
-        }
-        return false
     }
 
     @Override
