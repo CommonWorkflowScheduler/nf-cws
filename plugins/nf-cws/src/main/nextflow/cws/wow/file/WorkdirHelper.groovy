@@ -19,6 +19,8 @@ class WorkdirHelper {
 
     void validate() {
         validated = true
+        // Garbage collector might remove unused paths
+        paths.clear()
     }
 
     boolean isValidated() {
@@ -26,6 +28,9 @@ class WorkdirHelper {
     }
 
     LocalPath get( Path path ) {
+        if ( validated ) {
+            throw new IllegalStateException("WorkdirHelper validated")
+        }
         paths.get( path )
     }
 
