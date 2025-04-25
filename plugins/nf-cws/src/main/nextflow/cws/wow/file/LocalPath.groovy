@@ -117,15 +117,6 @@ class LocalPath implements Path {
         }
     }
 
-    /**
-     *
-     * @return A path located in the original workdir
-     */
-    Path fakePath(){
-        Path fake = FileHelper.fakePath( path, workDir )
-        return fake
-    }
-
     String getText(){
         getText( Charset.defaultCharset().toString() )
     }
