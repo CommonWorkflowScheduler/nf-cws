@@ -71,6 +71,10 @@ class LocalPath implements Path {
                 log.error("Cannot create FTP client: $daemon on $node", e)
                 sleep(Math.pow(2, trial++) as long)
                 daemon = client.getDaemonOnNode(node)
+            } catch ( IllegalAccessError e ) {
+                log.error( "Cannot use FTP for data download. Please make sure to start Nextflow with: " +
+                        "'export NXF_OPTS=\"--add-exports=java.base/sun.net.ftp=ALL-UNNAMED\"'")
+                throw e
             }
         }
     }
