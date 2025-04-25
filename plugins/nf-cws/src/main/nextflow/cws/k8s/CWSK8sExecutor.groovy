@@ -205,7 +205,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
     }
 
     protected static String hash(String text) {
-        def hasher = Hashing .murmur3_32() .newHasher()
+        def hasher = Hashing.murmur3_32_fixed().newHasher()
         hasher.putUnencodedChars(text)
         return hasher.hash().toString()
     }
