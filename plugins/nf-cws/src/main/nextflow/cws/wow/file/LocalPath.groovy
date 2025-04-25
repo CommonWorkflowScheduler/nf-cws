@@ -646,6 +646,9 @@ class LocalPath implements Path {
 
     @Override
     Path relativize(Path other) {
+        if ( other instanceof LocalPath ){
+            return toLocalPath( path.relativize( ((LocalPath) other).path ) )
+        }
         path.relativize( other )
     }
 
