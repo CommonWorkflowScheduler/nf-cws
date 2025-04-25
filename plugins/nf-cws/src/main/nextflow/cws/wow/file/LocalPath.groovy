@@ -51,7 +51,7 @@ class LocalPath implements Path {
     }
 
     static InputStream getFileStream(final String node, String daemon, String path) {
-        URL url = new URL("ftp://$daemon/$path")
+        URL url = URI.create("ftp://$daemon/$path").toURL()
         URLConnection con = url.openConnection()
         InputStream is = con.getInputStream()
         return is
