@@ -1,24 +1,27 @@
 package nextflow.cws.wow.file
 
 import nextflow.cws.SchedulerClient
+import sun.net.ftp.FtpClient
 
 class WOWInputStream extends InputStream {
 
     private InputStream inner
-    private SchedulerClient client
+    private SchedulerClient schedulerClient
     private LocalPath path
     private boolean fullyRead
+    private FtpClient ftpClient
 
     private File temporaryFile
     private OutputStream temporaryFileStream
     private boolean transferredTemporaryFile
 
-    WOWInputStream(InputStream inner, SchedulerClient client, LocalPath path) {
+    WOWInputStream(InputStream inner, SchedulerClient schedulerClient, LocalPath path, FtpClient ftpClient) {
         super()
         this.inner = inner
-        this.client = client
+        this.schedulerClient = schedulerClient
         this.path = path
         this.fullyRead = false
+        this.ftpClient = ftpClient
         this.temporaryFile = File.createTempFile("local", "buffer")
         this.temporaryFileStream = temporaryFile.newOutputStream()
         this.transferredTemporaryFile = false
@@ -36,7 +39,7 @@ class WOWInputStream extends InputStream {
         transferredTemporaryFile = true
 
         Map location = path.getLocation()
-        client.addFileLocation(path.toString(), file.size(), file.lastModified(), location.locationWrapperID as long, false)
+        schedulerClient.addFileLocation(path.toString(), file.size(), file.lastModified(), location.locationWrapperID as long, false)
     }
 
     @Override
@@ -59,6 +62,7 @@ class WOWInputStream extends InputStream {
     void close() throws IOException {
         fullyRead = inner.read() == -1
         inner.close()
+        ftpClient.close()
         checkTemporaryFileTransferal()
     }
 }

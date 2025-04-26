@@ -34,11 +34,9 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
         assert path instanceof LocalPath
         Map location = (path as LocalPath).getLocation()
 
-        try (FtpClient ftpClient = path.getConnection(location.node.toString(), location.daemon.toString())) {
-            try (InputStream is = ftpClient.getFileStream(location.path.toString())) {
-                return new WOWInputStream(is, schedulerClient, path)
-            }
-        }
+        FtpClient ftpClient = path.getConnection(location.node.toString(), location.daemon.toString())
+        InputStream is = ftpClient.getFileStream(location.path.toString())
+        return new WOWInputStream(is, schedulerClient, path, ftpClient)
     }
 
     @Override
