@@ -20,7 +20,7 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
     protected SchedulerClient schedulerClient = null // TODO: support multiple clients
 
     void registerSchedulerClient(SchedulerClient schedulerClient) throws UnsupportedOperationException {
-        if (schedulerClient != null) {
+        if (this.schedulerClient != null) {
             throw new UnsupportedOperationException("WOW file system does not support multiple scheduler clients")
         }
         this.schedulerClient = schedulerClient
@@ -28,7 +28,7 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     InputStream newInputStream(Path path, OpenOption... options) {
-        if (schedulerClient != null) {
+        if (schedulerClient == null) {
             throw new RuntimeException("WOW file system has no registered scheduler client")
         }
         assert path instanceof LocalPath
@@ -43,7 +43,7 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     OutputStream newOutputStream(Path path, OpenOption... options) {
-        if (schedulerClient != null) {
+        if (schedulerClient == null) {
             throw new RuntimeException("WOW file system has no registered scheduler client")
         }
         assert path instanceof LocalPath
