@@ -1,7 +1,9 @@
 package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
+import nextflow.cws.SchedulerClient
 import nextflow.file.FileSystemTransferAware
+import sun.net.ftp.FtpClient
 
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
@@ -14,6 +16,41 @@ import java.nio.file.spi.FileSystemProvider
 class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTransferAware {
 
     static final WOWFileSystemProvider INSTANCE = new WOWFileSystemProvider()
+
+    protected SchedulerClient schedulerClient = null // TODO: support multiple clients
+
+    void registerSchedulerClient(SchedulerClient schedulerClient) throws UnsupportedOperationException {
+        if (schedulerClient != null) {
+            throw new UnsupportedOperationException("WOW file system does not support multiple scheduler clients")
+        }
+        this.schedulerClient = schedulerClient
+    }
+
+    @Override
+    InputStream newInputStream(Path path, OpenOption... options) {
+        if (schedulerClient != null) {
+            throw new RuntimeException("WOW file system has no registered scheduler client")
+        }
+        assert path instanceof LocalPath
+        Map location = (path as LocalPath).getLocation()
+
+        try (FtpClient ftpClient = path.getConnection(location.node.toString(), location.daemon.toString())) {
+            try (InputStream is = ftpClient.getFileStream(location.path.toString())) {
+                return new WOWInputStream(is, schedulerClient, path)
+            }
+        }
+    }
+
+    @Override
+    OutputStream newOutputStream(Path path, OpenOption... options) {
+        if (schedulerClient != null) {
+            throw new RuntimeException("WOW file system has no registered scheduler client")
+        }
+        assert path instanceof LocalPath
+
+        OutputStream os = super.newOutputStream(path.getInner(), options)
+        return new WOWOutputStream(os, schedulerClient, path)
+    }
 
     @Override
     String getScheme() {
@@ -37,6 +74,7 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> set, FileAttribute<?>... fileAttributes) throws IOException {
+        log.info("FRIEDRICH: newByteChannel")
         LocalPath localPath = (LocalPath) path
         // TODO: find an alternative to always downloading
         Map downloadResult = localPath.download()
@@ -46,8 +84,8 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     DirectoryStream<Path> newDirectoryStream(Path path, DirectoryStream.Filter<? super Path> filter) throws IOException {
-        if ( path instanceof OfflineLocalPath && !((OfflineLocalPath) path).workdirHelper.isValidated() ) {
-            return ((OfflineLocalPath) path).workdirHelper.getDirectoryStream( path )
+        if (path instanceof OfflineLocalPath && !((OfflineLocalPath) path).workdirHelper.isValidated()) {
+            return ((OfflineLocalPath) path).workdirHelper.getDirectoryStream(path)
         }
 
         throw new UnsupportedOperationException("Directory stream not supported by ${getScheme().toUpperCase()} file system provider")
@@ -100,7 +138,7 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> aClass, LinkOption... linkOptions) throws IOException {
-        if ( path instanceof LocalPath ) {
+        if (path instanceof LocalPath) {
             return path.getAttributes() as A
         } else {
             return Files.readAttributes(path, BasicFileAttributes.class, linkOptions) as A

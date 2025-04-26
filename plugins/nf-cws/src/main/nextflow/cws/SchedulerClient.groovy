@@ -3,6 +3,7 @@ package nextflow.cws
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Slf4j
+import nextflow.cws.wow.file.WOWFileSystemProvider
 import nextflow.dag.DAG
 
 @Slf4j
@@ -20,6 +21,7 @@ class SchedulerClient {
         this.runName = runName
         this.dns = config.dns?.endsWith('/') ? config.dns[0..-2] : config.dns
         CWSSession.INSTANCE.addSchedulerClient( this )
+        WOWFileSystemProvider.INSTANCE.registerSchedulerClient( this )
     }
 
     protected String getDNS() {
