@@ -40,6 +40,11 @@ class WOWInputStream extends InputStream {
     }
 
     @Override
+    int available() throws IOException {
+        return inner.available()
+    }
+
+    @Override
     int read() throws IOException {
         int b = inner.read()
         temporaryFileStream.write(b)
