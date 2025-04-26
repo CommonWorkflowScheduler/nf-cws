@@ -46,8 +46,8 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     DirectoryStream<Path> newDirectoryStream(Path path, DirectoryStream.Filter<? super Path> filter) throws IOException {
-        if ( path instanceof OfflineLocalPath && !(path as OfflineLocalPath).workdirHelper.isValidated() ) {
-            return (path as OfflineLocalPath).workdirHelper.getDirectoryStream( path )
+        if ( path instanceof OfflineLocalPath && !((OfflineLocalPath) path).workdirHelper.isValidated() ) {
+            return ((OfflineLocalPath) path).workdirHelper.getDirectoryStream( path )
         }
 
         throw new UnsupportedOperationException("Directory stream not supported by ${getScheme().toUpperCase()} file system provider")
@@ -94,12 +94,12 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
     }
 
     @Override
-    def <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> aClass, LinkOption... linkOptions) {
+    <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> aClass, LinkOption... linkOptions) {
         throw new UnsupportedOperationException("File attribute view not supported by ${getScheme().toUpperCase()} file system provider")
     }
 
     @Override
-    def <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> aClass, LinkOption... linkOptions) throws IOException {
+    <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> aClass, LinkOption... linkOptions) throws IOException {
         if ( path instanceof LocalPath ) {
             return path.getAttributes() as A
         } else {

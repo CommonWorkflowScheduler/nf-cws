@@ -6,16 +6,6 @@ import java.nio.file.Path
 
 class WorkdirPathTest extends Specification {
 
-    def "FakePath"() {
-        when:
-        def path = Path.of("/input/data/work/be/8292aaebea2ddf9ae8ad4952882dcb")
-        def localPath = Path.of("/localdata/localwork/be/8292aaebea2ddf9ae8ad4952882dcb/file.txt")
-        def fakePath = WorkdirPath.getRelativePathOnFake( path, localPath )
-
-        then:
-        fakePath == Path.of("file.txt")
-    }
-
     def "matches"() {
         when:
         def path = Path.of("file.txt").getFileName()

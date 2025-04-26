@@ -1,7 +1,6 @@
 package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
-import nextflow.extension.FilesEx
 
 import java.nio.file.Path
 
@@ -37,36 +36,5 @@ class WorkdirPath extends OfflineLocalPath {
         def file = this.path.resolve( other )
         workdirHelper.get( file ) ?: file
     }
-
-    /**
-     * This method is used to get the relative path of a file in the local file system.
-     * @param workdir
-     * @param localPath
-     * @return
-     */
-    static Path getRelativePathOnFake(Path workdir, Path localPath ) {
-        String n1 = FilesEx.getName(workdir.getParent())
-        String n2 = FilesEx.getName(workdir)
-        Path p = null
-        boolean foundN1 = false
-        boolean foundN2 = false
-        for (final def part in localPath) {
-            if ( part.toString() == n1 && !foundN1 ) {
-                foundN1 = true
-            } else if ( part.toString() == n2 && foundN1 && !foundN2 ) {
-                foundN2 = true
-            } else if ( foundN1 && !foundN2 ) {
-                return localPath
-            } else if ( !foundN1 ) {
-                // n1 not found yet, ignore part before
-            } else if ( !p ) {
-                p = part
-            } else {
-                p = p.resolve(part)
-            }
-        }
-        return p ?: workdir.relativize( localPath )
-    }
-
 
 }

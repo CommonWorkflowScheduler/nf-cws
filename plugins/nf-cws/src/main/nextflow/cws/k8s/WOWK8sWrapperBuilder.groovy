@@ -6,6 +6,7 @@ import nextflow.file.FileHelper
 import nextflow.k8s.K8sWrapperBuilder
 import nextflow.processor.TaskRun
 import nextflow.util.Escape
+
 import java.nio.file.Path
 
 /**
@@ -35,6 +36,8 @@ class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
                         this.stageOutMode = 'move'
                     }
                     break
+                default :
+                    throw new IllegalArgumentException("Unsupported copy strategy: ${storage.getCopyStrategy()}")
             }
             if ( !this.targetDir || workDir == targetDir ) {
                 this.localWorkDir = FileHelper.getWorkFolder(storage.getWorkdir() as Path, task.getHash())

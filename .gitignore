@@ -10,3 +10,4 @@ out
 /gradle.properties
 /logs.tmp
 *.jar
+/plugins/nf-cws/src/resources/nf-cws/getStatsAndResolveSymlinks_*

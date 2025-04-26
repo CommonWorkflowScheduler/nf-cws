@@ -33,7 +33,7 @@ class SchedulerClient {
         int trials = 0
         while ( trials++ < 50 ) {
             try {
-                HttpURLConnection post = new URL(url).openConnection() as HttpURLConnection
+                HttpURLConnection post = URI.create(url).toURL().openConnection() as HttpURLConnection
                 post.setRequestMethod( "POST" )
                 post.setDoOutput(true)
                 post.setRequestProperty("Content-Type", "application/json")
@@ -59,14 +59,14 @@ class SchedulerClient {
     synchronized void closeScheduler(){
         if ( closed ) return
         closed = true
-        HttpURLConnection post = new URL("${getDNS()}/scheduler/$runName").openConnection() as HttpURLConnection
+        HttpURLConnection post = URI.create("${getDNS()}/scheduler/$runName").toURL().openConnection() as HttpURLConnection
         post.setRequestMethod( "DELETE" )
         int responseCode = post.getResponseCode()
         log.trace "Delete scheduler code was: ${responseCode}"
     }
 
     void submitMetrics( Map metrics, int id ){
-        HttpURLConnection post = new URL("${getDNS()}/scheduler/$runName/metrics/task/$id").openConnection() as HttpURLConnection
+        HttpURLConnection post = URI.create("${getDNS()}/scheduler/$runName/metrics/task/$id").toURL().openConnection() as HttpURLConnection
         post.setRequestMethod( "POST" )
         String message = JsonOutput.toJson( metrics )
         post.setDoOutput(true)
@@ -80,7 +80,7 @@ class SchedulerClient {
 
     Map registerTask( Map config, int id ){
 
-        HttpURLConnection post = new URL("${getDNS()}/scheduler/$runName/task/$id").openConnection() as HttpURLConnection
+        HttpURLConnection post = URI.create("${getDNS()}/scheduler/$runName/task/$id").toURL().openConnection() as HttpURLConnection
         post.setRequestMethod( "POST" )
         String message = JsonOutput.toJson( config )
         post.setDoOutput(true)
@@ -97,7 +97,7 @@ class SchedulerClient {
     }
 
     private void batch( String command ){
-        HttpURLConnection put = new URL("${getDNS()}/scheduler/$runName/${command}Batch").openConnection() as HttpURLConnection
+        HttpURLConnection put = URI.create("${getDNS()}/scheduler/$runName/${command}Batch").toURL().openConnection() as HttpURLConnection
         put.setRequestMethod( "PUT" )
         if ( command == 'end' ){
             put.setDoOutput(true)
@@ -121,7 +121,7 @@ class SchedulerClient {
 
     Map getTaskState( int id ){
 
-        HttpURLConnection get = new URL("${getDNS()}/scheduler/$runName/task/$id").openConnection() as HttpURLConnection
+        HttpURLConnection get = URI.create("${getDNS()}/scheduler/$runName/task/$id").toURL().openConnection() as HttpURLConnection
         get.setRequestMethod( "GET" )
         get.setDoOutput(true)
         int responseCode = get.getResponseCode()
@@ -144,7 +144,7 @@ class SchedulerClient {
                     uid : it.getId()
             ] as Map<String, Object>
         }
-        HttpURLConnection put = new URL("${getDNS()}/scheduler/$runName/DAG/vertices").openConnection() as HttpURLConnection
+        HttpURLConnection put = URI.create("${getDNS()}/scheduler/$runName/DAG/vertices").toURL().openConnection() as HttpURLConnection
         put.setRequestMethod( "POST" )
         String message = JsonOutput.toJson( verticesToSubmit )
         put.setDoOutput(true)
@@ -165,7 +165,7 @@ class SchedulerClient {
                 to : it.getTo()?.getId()
             ] as Map<String, Object>
         }
-        HttpURLConnection put = new URL("${getDNS()}/scheduler/$runName/DAG/edges").openConnection() as HttpURLConnection
+        HttpURLConnection put = URI.create("${getDNS()}/scheduler/$runName/DAG/edges").toURL().openConnection() as HttpURLConnection
         put.setRequestMethod( "POST" )
         String message = JsonOutput.toJson( edgesToSubmit )
         put.setDoOutput(true)
@@ -182,7 +182,7 @@ class SchedulerClient {
     Map getFileLocation( String path ){
 
         String pathEncoded = URLEncoder.encode(path,'utf-8')
-        HttpURLConnection get = new URL("${getDNS()}/file/$runName?path=$pathEncoded").openConnection() as HttpURLConnection
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName?path=$pathEncoded").toURL().openConnection() as HttpURLConnection
         get.setRequestMethod( "GET" )
         get.setDoOutput(true)
         int responseCode = get.getResponseCode()
@@ -196,7 +196,7 @@ class SchedulerClient {
 
     String getDaemonOnNode( String node ){
 
-        HttpURLConnection get = new URL("${getDNS()}/daemon/$runName/$node").openConnection() as HttpURLConnection
+        HttpURLConnection get = URI.create("${getDNS()}/daemon/$runName/$node").toURL().openConnection() as HttpURLConnection
         get.setRequestMethod( "GET" )
         get.setDoOutput(true)
         int responseCode = get.getResponseCode()
@@ -212,7 +212,7 @@ class SchedulerClient {
 
         String method = overwrite ? 'overwrite' : 'add'
 
-        HttpURLConnection get = new URL("${getDNS()}/file/$runName/location/${method}${ node ? "/$node" : ''}").openConnection() as HttpURLConnection
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName/location/${method}${ node ? "/$node" : ''}").toURL().openConnection() as HttpURLConnection
         get.setRequestMethod( "POST" )
         get.setDoOutput(true)
         Map data = [
@@ -226,7 +226,7 @@ class SchedulerClient {
         }
         String message = JsonOutput.toJson( data )
         get.setRequestProperty("Content-Type", "application/json")
-        get.getOutputStream().write(message.getBytes("UTF-8"));
+        get.getOutputStream().write(message.getBytes("UTF-8"))
         int responseCode = get.getResponseCode()
         if( responseCode != 200 ){
             throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while updating file location: $path: $node (${get.responseMessage})" )

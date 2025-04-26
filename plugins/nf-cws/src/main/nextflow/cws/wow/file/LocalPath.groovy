@@ -2,7 +2,6 @@ package nextflow.cws.wow.file
 
 import groovy.util.logging.Slf4j
 import nextflow.cws.k8s.K8sSchedulerClient
-import nextflow.file.FileHelper
 import org.codehaus.groovy.runtime.IOGroovyMethods
 import sun.net.ftp.FtpClient
 
@@ -51,7 +50,7 @@ class LocalPath implements Path {
     }
 
     static InputStream getFileStream(final String node, String daemon, String path) {
-        URL url = new URL("ftp://$daemon/$path")
+        URL url = URI.create("ftp://$daemon/$path").toURL()
         URLConnection con = url.openConnection()
         InputStream is = con.getInputStream()
         return is
@@ -96,15 +95,6 @@ class LocalPath implements Path {
                 log.error("Couldn't create directory ${path.getParent().toAbsolutePath().toString()}", e)
             }
         }
-    }
-
-    /**
-     *
-     * @return A path located in the original workdir
-     */
-    Path fakePath(){
-        Path fake = FileHelper.fakePath( path, workDir )
-        return fake
     }
 
     String getText(){
@@ -219,19 +209,19 @@ class LocalPath implements Path {
         IOGroovyMethods.readLines( newReader( charset ) )
     }
 
-    public <T> T eachLine( Closure<T> closure ) throws IOException {
+    <T> T eachLine( Closure<T> closure ) throws IOException {
         eachLine( Charset.defaultCharset().toString(), 1, closure )
     }
 
-    public <T> T eachLine( int firstLine, Closure<T> closure ) throws IOException {
+    <T> T eachLine( int firstLine, Closure<T> closure ) throws IOException {
         eachLine( Charset.defaultCharset().toString(), firstLine, closure )
     }
 
-    public <T> T eachLine( String charset, Closure<T> closure ) throws IOException {
+    <T> T eachLine( String charset, Closure<T> closure ) throws IOException {
         eachLine( charset, 1, closure )
     }
 
-    public <T> T eachLine( String charset, int firstLine, Closure<T> closure ) throws IOException {
+    <T> T eachLine( String charset, int firstLine, Closure<T> closure ) throws IOException {
         log.info("FRIEDRICH eachLine")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -304,7 +294,7 @@ class LocalPath implements Path {
         return printWriter
     }
 
-    public <T> T eachByte( Closure<T> closure ) throws IOException {
+    <T> T eachByte( Closure<T> closure ) throws IOException {
         log.info("FRIEDRICH eachByte1")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -318,7 +308,7 @@ class LocalPath implements Path {
         }
     }
 
-    public <T> T eachByte( int bufferLen, Closure<T> closure ) throws IOException {
+    <T> T eachByte( int bufferLen, Closure<T> closure ) throws IOException {
         log.info("FRIEDRICH eachByte2")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -332,7 +322,7 @@ class LocalPath implements Path {
         }
     }
 
-    public <T> T withInputStream( Closure<T> closure) throws IOException {
+    <T> T withInputStream( Closure<T> closure) throws IOException {
         log.info("FRIEDRICH withInputStream")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -358,7 +348,7 @@ class LocalPath implements Path {
         return rv
     }
 
-    public BufferedInputStream newInputStream() throws IOException {
+    BufferedInputStream newInputStream() throws IOException {
         log.info("FRIEDRICH newInputStream")
         final String absolutePath = path.toAbsolutePath().toString()
         final def location = getLocation( absolutePath )
@@ -478,8 +468,8 @@ class LocalPath implements Path {
 
     <T> T asType( Class<T> c ) {
         log.info("FRIEDRICH asType")
-        if ( c == Path.class ) return this
-        if ( c == File.class ) return toFile()
+        if ( c.isAssignableFrom( getClass() ) ) return this
+        if ( c.isAssignableFrom( LocalPath.class ) ) return toFile()
         if ( c == String.class ) return toString()
         log.info("Invoke method asType $c on $this")
         return super.asType( c )
@@ -612,6 +602,9 @@ class LocalPath implements Path {
 
     @Override
     Path relativize(Path other) {
+        if ( other instanceof LocalPath ){
+            return toLocalPath( path.relativize( ((LocalPath) other).path ) )
+        }
         path.relativize( other )
     }
 
@@ -631,7 +624,7 @@ class LocalPath implements Path {
 
     @Override
     File toFile() {
-        path.toFile()
+        new LocalFile( this )
     }
 
     @Override
@@ -647,9 +640,9 @@ class LocalPath implements Path {
     @Override
     int compareTo(Path other) {
         if ( other instanceof LocalPath ){
-            return path.compareTo( ((LocalPath) other).path )
+            return path <=> ((LocalPath) other).path
         }
-        path.compareTo( other )
+        path <=> other
     }
 
     @Override
@@ -659,5 +652,21 @@ class LocalPath implements Path {
 
     BasicFileAttributes getAttributes(){
         attributes
+    }
+
+    @Override
+    boolean equals(Object obj) {
+        if ( obj instanceof LocalPath ){
+            return path == ((LocalPath) obj).path
+        }
+        if ( obj instanceof Path ){
+            return path == obj
+        }
+        return false
+    }
+
+    @Override
+    int hashCode() {
+        return path.hashCode() * 2 + 1
     }
 }
