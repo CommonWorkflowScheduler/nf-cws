@@ -1,6 +1,7 @@
 package nextflow.cws.k8s
 
 import groovy.json.JsonOutput
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.k8s.client.ClientConfig
 import nextflow.k8s.client.K8sClient
@@ -11,6 +12,7 @@ import org.yaml.snakeyaml.Yaml
 import java.nio.file.Path
 
 @Slf4j
+@CompileStatic
 class CWSK8sClient extends K8sClient {
 
     CWSK8sClient(K8sClient k8sClient) {
@@ -106,7 +108,7 @@ class CWSK8sClient extends K8sClient {
         final K8sResponseJson resp = podStatus0(podName)
 
         //If this label is not set, the memory was not scaled
-        if ( resp?.metadata?.labels?."commonworkflowscheduler/memoryscaled" != 'true' ) {
+        if ( ((resp?.metadata as Map)?.labels as Map)?."commonworkflowscheduler/memoryscaled" != 'true' ) {
             return null
         }
 
@@ -114,7 +116,7 @@ class CWSK8sClient extends K8sClient {
         if ( containers == null || containers.size() == 0 ) {
             return null
         }
-        String memory = containers[0]?.resources?.limits?.memory as String
+        String memory = ((containers[0]?.resources as Map)?.limits as Map)?.memory as String
         if ( memory == null ) {
             return null
         } else {

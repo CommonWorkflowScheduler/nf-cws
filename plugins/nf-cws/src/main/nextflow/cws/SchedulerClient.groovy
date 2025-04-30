@@ -2,11 +2,14 @@ package nextflow.cws
 
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.cws.wow.file.WOWFileSystemProvider
 import nextflow.dag.DAG
 
 @Slf4j
+@CompileStatic
 class SchedulerClient {
 
     private final CWSConfig config
@@ -137,7 +140,7 @@ class SchedulerClient {
 
 
     ///* DAG */
-
+    @CompileDynamic
     void submitVertices( List<DAG.Vertex> vertices ){
         List<Map< String, Object >> verticesToSubmit = vertices.collect {
             [
@@ -158,6 +161,7 @@ class SchedulerClient {
         }
     }
 
+    @CompileDynamic
     void submitEdges( List<DAG.Edge> edges ){
         List<Map< String, Object >> edgesToSubmit = edges.collect {
             [

@@ -1,6 +1,7 @@
 package nextflow.cws.k8s
 
 import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.cws.SchedulerClient
 import nextflow.executor.BashWrapperBuilder
@@ -15,6 +16,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 @Slf4j
+@CompileStatic
 class CWSK8sTaskHandler extends K8sTaskHandler {
 
     static final public String CMD_TRACE_SCHEDULER = '.command.scheduler.trace'
@@ -177,22 +179,29 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
+    boolean schedulerPostProcessingHasFinished(){
+        Map state = schedulerClient.getTaskState(task.id.intValue())
+        return (!state.state) ?: ["FINISHED", "FINISHED_WITH_ERROR", "INIT_WITH_ERRORS", "DELETED"].contains( state.state.toString() )
+    }
+
     @Override
     boolean checkIfCompleted() {
         Map state = getState()
-        if( !state || !state.terminated ) {
+        if( !state || !state.terminated || ( (k8sConfig as CWSK8sConfig)?.locationAwareScheduling() && !schedulerPostProcessingHasFinished() ) ) {
             return false
         }
         if( executor.getCWSConfig().memoryPredictor ) {
             memoryAdapted = client.getAdaptedPodMemory( podName )
             if ( memoryAdapted != null ) {
                 //only use a special failure logic if the memory was adapted
-                if (state.terminated.exitCode == 128
-                        && (state.terminated.reason as String) == "StartError") {
+
+                def terminated = state.terminated as Map
+                if (terminated.exitCode == 128
+                        && (terminated.reason as String) == "StartError") {
                     failedOOM = true
                     log.info("The memory was choosen too small for the pod ${podName} to be started. More memory is tried next time.")
                     task.error = new MemoryScalingFailure()
-                } else if ((state.terminated.reason as String) == "OOMKilled") {
+                } else if ((terminated.reason as String) == "OOMKilled") {
                     failedOOM = true
                     log.info("The memory was choosen too small for the pod ${podName} to be executed. More memory is tried next time.")
                     task.error = new MemoryScalingFailure()

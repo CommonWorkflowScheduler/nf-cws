@@ -1,5 +1,6 @@
 package nextflow.cws.k8s
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.cws.CWSConfig
 import nextflow.cws.SchedulerClient
@@ -15,6 +16,7 @@ import nextflow.k8s.model.PodVolumeClaim
 import java.nio.file.Paths
 
 @Slf4j
+@CompileStatic
 class K8sSchedulerClient extends SchedulerClient {
 
     private final CWSK8sConfig.K8sScheduler schedulerConfig
@@ -115,7 +117,7 @@ class K8sSchedulerClient extends SchedulerClient {
                                 name: 'AUTOCLOSE',
                                 value: schedulerConfig.autoClose() as String
                         ]]
-            Map container = pod.spec.containers.get(0) as Map
+            Map container = ((pod.spec as Map).containers as List).get(0) as Map
             container.put('env', env)
             container.remove( 'command' )
             (container.resources as Map)?.remove( 'limits' )

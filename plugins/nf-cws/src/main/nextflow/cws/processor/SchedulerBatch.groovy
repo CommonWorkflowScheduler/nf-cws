@@ -1,5 +1,8 @@
 package nextflow.cws.processor
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 abstract class SchedulerBatch {
 
     private final int batchSize

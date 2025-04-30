@@ -1,7 +1,9 @@
 package nextflow.cws.k8s.model
 
+import groovy.transform.CompileStatic
 import nextflow.k8s.model.PodMountConfig
 
+@CompileStatic
 class PodMountConfigWithMode extends PodMountConfig {
     private Integer mode
 

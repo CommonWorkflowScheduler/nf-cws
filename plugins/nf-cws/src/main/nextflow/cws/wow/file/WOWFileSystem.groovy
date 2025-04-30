@@ -1,9 +1,12 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import java.nio.file.*
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 
+@CompileStatic
 class WOWFileSystem extends FileSystem {
 
     static final WOWFileSystem INSTANCE = new WOWFileSystem()
@@ -53,6 +56,7 @@ class WOWFileSystem extends FileSystem {
     }
 
     @Override
+    @CompileDynamic
     PathMatcher getPathMatcher(String s) {
         return new PathMatcher() {
             private final def matcher = FileSystems.getDefault().getPathMatcher( s )

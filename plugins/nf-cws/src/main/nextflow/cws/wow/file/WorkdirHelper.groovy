@@ -1,11 +1,13 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import java.nio.file.DirectoryStream
 import java.nio.file.Path
 
 @Slf4j
+@CompileStatic
 class WorkdirHelper {
 
     private final Map<Path, LocalPath> paths
@@ -17,10 +19,12 @@ class WorkdirHelper {
         this.paths = paths
     }
 
+    private WorkdirHelper() {
+        this(null, null)
+    }
+
     void validate() {
         validated = true
-        // Garbage collector might remove unused paths
-        paths.clear()
     }
 
     boolean isValidated() {
@@ -34,8 +38,12 @@ class WorkdirHelper {
         paths.get( path )
     }
 
-    Path relativeToWorkdir( Path path ) {
-        rootPath.relativize( path )
+    Path relativeToWorkdir( LocalPath path ) {
+        new LocalPath( rootPath.relativize( path.path ), (LocalFileWalker.FileAttributes) path.getAttributes(), path.workDir )
+    }
+
+    int getNameCount() {
+        rootPath.getNameCount()
     }
 
     DirectoryStream<Path> getDirectoryStream(Path path) {
@@ -53,7 +61,7 @@ class WorkdirHelper {
                     def result = toCompareAgainst.parent == cp.getInner()
                     return result
                 }.collect {
-                    it.value
+                    (Path) it.value
                 }
                 return all.iterator()
             }

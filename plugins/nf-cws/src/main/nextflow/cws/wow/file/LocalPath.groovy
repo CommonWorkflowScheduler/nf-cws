@@ -1,5 +1,6 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.cws.k8s.K8sSchedulerClient
 import sun.net.ftp.FtpClient
@@ -8,13 +9,14 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 
 @Slf4j
-class LocalPath implements Path {
+@CompileStatic
+class LocalPath implements Path, Serializable {
 
     protected final Path path
     private transient final LocalFileWalker.FileAttributes attributes
     private static transient K8sSchedulerClient client = null
     private boolean wasDownloaded = false
-    private Path workDir
+    protected Path workDir
     private boolean createdSymlinks = false
     private transient final Object createSymlinkHelper = new Object()
 
@@ -56,6 +58,7 @@ class LocalPath implements Path {
                 FtpClient ftpClient = FtpClient.create(daemon)
                 ftpClient.login("root", "password".toCharArray() )
                 ftpClient.enablePassiveMode( true )
+                ftpClient.setBinaryType()
                 return ftpClient
             } catch ( IOException e ) {
                 if ( trial > 5 ) throw e
@@ -101,7 +104,13 @@ class LocalPath implements Path {
     Map download(){
         log.info("FRIEDRICH download")
         final String absolutePath = path.toAbsolutePath().toString()
-        final def location = getLocation( absolutePath )
+        def location
+        def trial = 0
+        do {
+            if ( trial > 0 ) Thread.sleep( trial * 1000 )
+            location = getLocation( absolutePath )
+            trial++
+        } while ( (location.node == null || location.daemon == null) && trial < 5 )
         synchronized ( this ) {
             if ( this.wasDownloaded || location.sameAsEngine ) {
                 log.trace("No download")
@@ -132,11 +141,10 @@ class LocalPath implements Path {
     }
 
     <T> T asType( Class<T> c ) {
-        log.info("FRIEDRICH asType")
-        if ( c.isAssignableFrom( getClass() ) ) return this
-        if ( c.isAssignableFrom( LocalPath.class ) ) return toFile()
-        if ( c == String.class ) return toString()
-        log.info("Invoke method asType $c on $this")
+        if ( c.isAssignableFrom( getClass() ) ) return (T) this
+        if ( c.isAssignableFrom( LocalPath.class ) ) return (T) toFile()
+        if ( c == String.class ) return (T) toString()
+        log.info("Invoke method asType $c on ${this.class}")
         return super.asType( c )
     }
 
@@ -149,10 +157,10 @@ class LocalPath implements Path {
         Object result = path.invokeMethod(name, args)
         if( lastModified != file.lastModified() ){
             //Update location in scheduler (overwrite all others)
-            client.addFileLocation( downloadResult.location.path.toString() , file.size(), file.lastModified(), downloadResult.location.locationWrapperID as long, true )
+            client.addFileLocation( (downloadResult.location as Map).path.toString() , file.size(), file.lastModified(), (downloadResult.location as Map).locationWrapperID as long, true )
         } else if ( downloadResult.wasDownloaded ){
             //Add location to scheduler
-            client.addFileLocation( downloadResult.location.path.toString() , file.size(), file.lastModified(), downloadResult.location.locationWrapperID as long, false )
+            client.addFileLocation( (downloadResult.location as Map).path.toString() , file.size(), file.lastModified(), (downloadResult.location as Map).locationWrapperID as long, false )
         }
         return result
     }
@@ -268,7 +276,8 @@ class LocalPath implements Path {
     @Override
     Path relativize(Path other) {
         if ( other instanceof LocalPath ){
-            return toLocalPath( path.relativize( ((LocalPath) other).path ) )
+            def localPath = (LocalPath) other
+            return toLocalPath( path.relativize( localPath.path), (LocalFileWalker.FileAttributes) localPath.attributes, localPath.workDir )
         }
         path.relativize( other )
     }
@@ -276,6 +285,10 @@ class LocalPath implements Path {
     @Override
     URI toUri() {
         return getFileSystem().provider().getScheme() + "://" + path.toAbsolutePath() as URI
+    }
+
+    String toUriString() {
+        return getFileSystem().provider().getScheme() + ":/" + path.toAbsolutePath()
     }
 
     Path toAbsolutePath(){

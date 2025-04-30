@@ -1,7 +1,9 @@
 package nextflow.cws
 
+import groovy.transform.CompileStatic
 import nextflow.cws.processor.SchedulerBatch
 
+@CompileStatic
 class CWSSchedulerBatch extends SchedulerBatch {
 
     private SchedulerClient schedulerClient

@@ -1,5 +1,6 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import java.nio.file.Files
@@ -9,6 +10,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 
 @Slf4j
+@CompileStatic
 class LocalFileWalker {
 
     static final int VIRTUAL_PATH = 0

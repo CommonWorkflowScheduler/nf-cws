@@ -1,7 +1,9 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileStatic
 import nextflow.cws.SchedulerClient
 
+@CompileStatic
 class WOWOutputStream extends OutputStream {
 
     private OutputStream inner
@@ -17,11 +19,12 @@ class WOWOutputStream extends OutputStream {
 
     @Override
     void write(int b) throws IOException {
-        super.write(b)
+        inner.write(b)
     }
 
     @Override
     void close() throws IOException {
+        inner.close()
         Map location = path.getLocation()
         File file = path.getInner().toFile()
         client.addFileLocation(path.toString(), file.size(), file.lastModified(), location.locationWrapperID as long, true)

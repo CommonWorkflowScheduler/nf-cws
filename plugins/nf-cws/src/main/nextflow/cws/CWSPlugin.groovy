@@ -1,10 +1,13 @@
 package nextflow.cws
 
 import groovy.transform.CompileStatic
+import nextflow.cws.wow.file.OfflineLocalPath
 import nextflow.cws.wow.file.WOWFileSystemProvider
+import nextflow.cws.wow.file.WorkdirHelper
 import nextflow.file.FileHelper
 import nextflow.plugin.BasePlugin
 import nextflow.trace.TraceRecord
+import nextflow.util.KryoHelper
 import org.pf4j.PluginWrapper
 
 @CompileStatic
@@ -59,6 +62,8 @@ class CWSPlugin extends BasePlugin {
     void start() {
         super.start()
         registerTraceFields()
+        KryoHelper.register( OfflineLocalPath )
+        KryoHelper.register( WorkdirHelper )
         FileHelper.getOrInstallProvider(WOWFileSystemProvider)
     }
 

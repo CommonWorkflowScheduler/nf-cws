@@ -1,8 +1,11 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileStatic
+
 import java.nio.file.attribute.FileTime
 import java.text.SimpleDateFormat
 
+@CompileStatic
 final class DateParser {
 
     private DateParser(){}

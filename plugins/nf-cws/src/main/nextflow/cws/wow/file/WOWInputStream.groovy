@@ -1,8 +1,10 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileStatic
 import nextflow.cws.SchedulerClient
 import sun.net.ftp.FtpClient
 
+@CompileStatic
 class WOWInputStream extends InputStream {
 
     private InputStream inner
@@ -50,10 +52,11 @@ class WOWInputStream extends InputStream {
     @Override
     int read() throws IOException {
         int b = inner.read()
-        temporaryFileStream.write(b)
         if (b == -1) {
             fullyRead = true
             checkTemporaryFileTransferal()
+        } else {
+            temporaryFileStream.write(b)
         }
         return b
     }

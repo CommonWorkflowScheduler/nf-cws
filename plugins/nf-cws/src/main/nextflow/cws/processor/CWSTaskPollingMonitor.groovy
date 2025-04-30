@@ -1,5 +1,6 @@
 package nextflow.cws.processor
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.Session
 import nextflow.cws.wow.file.LocalFileWalker
@@ -10,6 +11,7 @@ import nextflow.processor.TaskPollingMonitor
 import nextflow.util.Duration
 
 @Slf4j
+@CompileStatic
 class CWSTaskPollingMonitor extends TaskPollingMonitor {
 
     /**

@@ -34,6 +34,10 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
         assert path instanceof LocalPath
         Map location = (path as LocalPath).getLocation()
 
+        if ( location?.sameAsEngine ) {
+            return Files.newInputStream(path.getInner(), options)
+        }
+
         FtpClient ftpClient = path.getConnection(location.node.toString(), location.daemon.toString())
         InputStream is = ftpClient.getFileStream(location.path.toString())
         return new WOWInputStream(is, schedulerClient, path, ftpClient)
@@ -165,8 +169,7 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     void download(Path source, Path target, CopyOption... copyOptions) throws IOException {
-        log.warn("Work in progress: Implementation for downloading functionality may not be correct or complete in ${getScheme().toUpperCase()} file system provider")
-        // do nothing, as data downloading is handled by the WOW scheduler
+        log.warn( "Not Implemented: Download from ${source} (${source.class.name}) to ${target} (${target.class.name}) with options ${copyOptions}" )
     }
 
     @Override

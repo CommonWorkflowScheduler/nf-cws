@@ -1,5 +1,6 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
 import java.nio.file.Path
@@ -8,6 +9,7 @@ import java.nio.file.Path
  * This is required to calculate the correct relative path to the workdir.
  */
 @Slf4j
+@CompileStatic
 class WorkdirPath extends OfflineLocalPath {
 
     WorkdirPath(Path path, LocalFileWalker.FileAttributes attributes, Path workDir, WorkdirHelper workdirHelper) {
@@ -21,7 +23,7 @@ class WorkdirPath extends OfflineLocalPath {
             if ( this.path == otherPath ) {
                 return Path.of("")
             }
-            return workdirHelper.relativeToWorkdir( otherPath )
+            return workdirHelper.relativeToWorkdir( (LocalPath) other )
         }
         return this.path.relativize( other )
     }
@@ -37,4 +39,8 @@ class WorkdirPath extends OfflineLocalPath {
         workdirHelper.get( file ) ?: file
     }
 
+    @Override
+    int getNameCount() {
+        return workdirHelper.getNameCount()
+    }
 }
