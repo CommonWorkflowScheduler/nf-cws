@@ -26,6 +26,10 @@ class LocalFileWalker {
         Map<Path,LocalPath> files = new HashMap<>()
         Path rootPath = null
         File file = new File( start.toString() + File.separatorChar + ".command.outfiles" )
+        if ( !file.exists() ) {
+            log.warn( "File ${file} does not exist" )
+            return null
+        }
         String line
         WorkdirHelper workdirHelper
         file.withReader { reader ->

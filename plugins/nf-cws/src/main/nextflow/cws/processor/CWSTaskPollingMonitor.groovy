@@ -64,10 +64,13 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
     protected void finalizeTask(TaskHandler handler) {
         def workDir = handler.task.workDir
         def helper = LocalFileWalker.createWorkdirHelper( workDir )
-        def attributes = new LocalFileWalker.FileAttributes(workDir)
-        OfflineLocalPath path = new WorkdirPath( workDir, attributes, workDir, helper )
-        handler.task.workDir = path
+        if ( helper ) {
+            def attributes = new LocalFileWalker.FileAttributes(workDir)
+            OfflineLocalPath path = new WorkdirPath( workDir, attributes, workDir, helper )
+            handler.task.workDir = path
+        }
         super.finalizeTask(handler)
-        helper.validate()
+        helper?.validate()
     }
+    
 }

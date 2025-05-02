@@ -94,7 +94,7 @@ class K8sSchedulerClient extends SchedulerClient {
                     .withNamespace( namespace )
                     .withLabel('component', 'scheduler')
                     .withLabel('tier', 'control-plane')
-                    .withLabel('app', 'nextflow')
+                    .withLabel('nextflow.io/app', 'nextflow')
                     .withHostMounts( hostMounts )
                     .withVolumeClaims( volumeClaims )
 

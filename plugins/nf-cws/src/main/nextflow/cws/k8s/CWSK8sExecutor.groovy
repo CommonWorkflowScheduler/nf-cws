@@ -278,7 +278,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
                                 metadata: [
                                         labels: [
                                                 name : name,
-                                                app: 'nextflow'
+                                                "nextflow.io/app" : 'nextflow'
                                         ]
                                 ],
                                 spec: spec,
