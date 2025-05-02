@@ -3,6 +3,7 @@ package nextflow.cws.processor
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.Session
+import nextflow.cws.CWSConfig
 import nextflow.cws.wow.file.LocalFileWalker
 import nextflow.cws.wow.file.OfflineLocalPath
 import nextflow.cws.wow.file.WorkdirPath
@@ -18,6 +19,7 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
      * Object to batch the task submission to achieve a better scheduling plan
      */
     private final SchedulerBatch schedulerBatch
+    private final CWSConfig cwsConfig
 
     /**
      * Create the task polling monitor with the provided named parameters object.
@@ -34,6 +36,7 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
     protected CWSTaskPollingMonitor(Map params) {
         super(params)
         this.schedulerBatch = params.schedulerBatch as SchedulerBatch
+        cwsConfig = new CWSConfig(session.config.navigate('cws') as Map)
     }
 
     static TaskPollingMonitor create(Session session, String name, int defQueueSize, Duration defPollInterval, SchedulerBatch schedulerBatch ) {
@@ -62,6 +65,10 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
 
     @Override
     protected void finalizeTask(TaskHandler handler) {
+        if (!cwsConfig.strategyIsLocationAware()) {
+            super.finalizeTask(handler)
+            return
+        }
         def workDir = handler.task.workDir
         def helper = LocalFileWalker.createWorkdirHelper( workDir )
         if ( helper ) {

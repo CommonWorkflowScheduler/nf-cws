@@ -16,6 +16,14 @@ class CWSConfig {
 
     String getStrategy() { target.strategy as String ?: 'FIFO' }
 
+    boolean strategyIsLocationAware() {
+        switch(target.strategy) {
+            case "wow": return true
+            default:
+                return false
+        }
+    }
+
     String getCostFunction() { target.costFunction as String }
 
     String getMemoryPredictor() { target.memoryPredictor as String }
