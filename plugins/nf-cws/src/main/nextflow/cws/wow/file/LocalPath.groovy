@@ -15,7 +15,6 @@ class LocalPath implements Path, Serializable {
     protected final Path path
     private transient final LocalFileWalker.FileAttributes attributes
     private static transient K8sSchedulerClient client = null
-    private boolean wasDownloaded = false
     protected Path workDir
     private boolean createdSymlinks = false
     private transient final Object createSymlinkHelper = new Object()
@@ -50,9 +49,7 @@ class LocalPath implements Path, Serializable {
     }
 
     static FtpClient getConnection(final String node, String daemon ){
-        log.info("FRIEDRICH getConnection")
         int trial = 0
-        log.info("FRIEDRICH $node -- $daemon")
         while ( true ) {
             try {
                 FtpClient ftpClient = FtpClient.create(daemon)
@@ -72,7 +69,6 @@ class LocalPath implements Path, Serializable {
     Map getLocation() { getLocation(path.toAbsolutePath().toString()) }
 
     Map getLocation( String absolutePath ){
-        log.info("FRIEDRICH getLocation")
         Map response = client.getFileLocation( absolutePath )
         synchronized ( createSymlinkHelper ) {
             if ( !createdSymlinks ) {
@@ -101,68 +97,12 @@ class LocalPath implements Path, Serializable {
         response
     }
 
-    Map download(){
-        log.info("FRIEDRICH download")
-        final String absolutePath = path.toAbsolutePath().toString()
-        def location
-        def trial = 0
-        do {
-            if ( trial > 0 ) Thread.sleep( trial * 1000 )
-            location = getLocation( absolutePath )
-            trial++
-        } while ( (location.node == null || location.daemon == null) && trial < 5 )
-        synchronized ( this ) {
-            if ( this.wasDownloaded || location.sameAsEngine ) {
-                log.trace("No download")
-                return [ wasDownloaded : false, location : location ]
-            }
-            try (FtpClient ftpClient = getConnection(location.node as String, location.daemon as String)) {
-                try (InputStream fileStream = ftpClient.getFileStream(location.path as String)) {
-                    log.trace("Download remote $absolutePath")
-                    final def file = toFile()
-                    path.parent.toFile().mkdirs()
-                    OutputStream outStream = new FileOutputStream(file)
-                    byte[] buffer = new byte[8 * 1024]
-                    int bytesRead
-                    while ((bytesRead = fileStream.read(buffer)) != -1) {
-                        outStream.write(buffer, 0, bytesRead)
-                    }
-                    fileStream.close()
-                    outStream.close()
-                    this.wasDownloaded = true
-                    return [wasDownloaded: true, location: location]
-                } catch (Exception e) {
-                    throw e
-                }
-            } catch (Exception e) {
-                throw e
-            }
-        }
-    }
-
     <T> T asType( Class<T> c ) {
         if ( c.isAssignableFrom( getClass() ) ) return (T) this
         if ( c.isAssignableFrom( LocalPath.class ) ) return (T) toFile()
         if ( c == String.class ) return (T) toString()
         log.info("Invoke method asType $c on ${this.class}")
         return super.asType( c )
-    }
-
-    @Override
-    Object invokeMethod(String name, Object args) {
-        log.info("FRIEDRICH invokeMethod")
-        Map downloadResult = download()
-        def file = path.toFile()
-        def lastModified = file.lastModified()
-        Object result = path.invokeMethod(name, args)
-        if( lastModified != file.lastModified() ){
-            //Update location in scheduler (overwrite all others)
-            client.addFileLocation( (downloadResult.location as Map).path.toString() , file.size(), file.lastModified(), (downloadResult.location as Map).locationWrapperID as long, true )
-        } else if ( downloadResult.wasDownloaded ){
-            //Add location to scheduler
-            client.addFileLocation( (downloadResult.location as Map).path.toString() , file.size(), file.lastModified(), (downloadResult.location as Map).locationWrapperID as long, false )
-        }
-        return result
     }
 
     String getBaseName() {

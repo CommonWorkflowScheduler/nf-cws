@@ -32,13 +32,13 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
             throw new RuntimeException("WOW file system has no registered scheduler client")
         }
         assert path instanceof LocalPath
-        Map location = (path as LocalPath).getLocation()
+        Map location = path.getLocation()
 
         if ( location?.sameAsEngine ) {
             return Files.newInputStream(path.getInner(), options)
         }
 
-        FtpClient ftpClient = path.getConnection(location.node.toString(), location.daemon.toString())
+        FtpClient ftpClient = LocalPath.getConnection(location.node.toString(), location.daemon.toString())
         InputStream is = ftpClient.getFileStream(location.path.toString())
         return new WOWInputStream(is, schedulerClient, path, ftpClient)
     }
@@ -75,13 +75,8 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
     }
 
     @Override
-    SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> set, FileAttribute<?>... fileAttributes) throws IOException {
-        log.info("FRIEDRICH: newByteChannel")
-        LocalPath localPath = (LocalPath) path
-        // TODO: find an alternative to always downloading
-        Map downloadResult = localPath.download()
-        assert (downloadResult.wasDownloaded || downloadResult.location.sameAsEngine)
-        return Files.newByteChannel(localPath.getInner())
+    SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+        throw new UnsupportedOperationException("New byte channel not supported by ${getScheme().toUpperCase()} file system provider")
     }
 
     @Override
@@ -110,7 +105,7 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     void move(Path path, Path path1, CopyOption... copyOptions) throws IOException {
-        throw new UnsupportedOperationException("move not supported by ${getScheme().toUpperCase()} file system provider")
+        throw new UnsupportedOperationException("Move not supported by ${getScheme().toUpperCase()} file system provider")
     }
 
     @Override
