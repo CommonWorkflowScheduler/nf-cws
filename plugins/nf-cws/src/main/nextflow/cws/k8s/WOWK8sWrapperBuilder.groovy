@@ -95,7 +95,7 @@ class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
     protected String getLaunchCommand(String interpreter, String env) {
         String cmd = ''
         if( storage && localWorkDir ){
-            cmd += "cp -u \"/etc/nextflow/${statFileName}\" \"${getStorageLocalWorkDir()}\"\n"
+            cmd += "[[ -f \"${getStorageLocalWorkDir()}/${statFileName}\" ]] || cp \"/etc/nextflow/${statFileName}\" \"${getStorageLocalWorkDir()}\"\n"
             cmd += "chmod +x \"${getStorageLocalWorkDir()}/${statFileName}\"\n"
             cmd += "local INFILESTIME=\$(\"${getStorageLocalWorkDir()}/${statFileName}\" infiles \"${workDir.toString()}/.command.infiles\" \"${getStorageLocalWorkDir()}\" \"\$PWD/\" || true)\n"
         }
