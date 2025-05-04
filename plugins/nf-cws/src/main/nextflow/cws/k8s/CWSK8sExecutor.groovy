@@ -8,13 +8,13 @@ import groovy.util.logging.Slf4j
 import nextflow.cws.CWSConfig
 import nextflow.cws.CWSSchedulerBatch
 import nextflow.cws.SchedulerClient
-import nextflow.cws.k8s.model.PodMountConfigWithMode
 import nextflow.cws.processor.CWSTaskPollingMonitor
 import nextflow.k8s.K8sConfig
 import nextflow.k8s.K8sExecutor
 import nextflow.k8s.client.K8sClient
 import nextflow.k8s.client.K8sResponseException
 import nextflow.k8s.model.PodHostMount
+import nextflow.k8s.model.PodMountConfig
 import nextflow.k8s.model.PodOptions
 import nextflow.k8s.model.PodVolumeClaim
 import nextflow.processor.TaskHandler
@@ -38,6 +38,8 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
      * Name of the created daemonSet
      */
     private String daemonSet = null
+
+    private String configMapName = null
 
     @Override
     @Memoized
@@ -73,7 +75,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         assert task
         assert task.workDir
         log.trace "[K8s] launching process > ${task.name} -- work folder: ${task.workDirStr}"
-        return new CWSK8sTaskHandler( task, this )
+        return new CWSK8sTaskHandler( task, this, configMapName )
     }
 
     @Override
@@ -184,10 +186,10 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         final content = contentStream.bytes.encodeBase64().toString()
         configMap[WOWK8sWrapperBuilder.statFileName] = content
 
-        String configMapName = makeConfigMapName(content)
+        configMapName = makeConfigMapName(content)
         tryCreateConfigMap(configMapName, configMap)
         log.debug "Created K8s configMap with name: $configMapName"
-        k8sConfig.getPodOptions().getMountConfigMaps().add( new PodMountConfigWithMode(configMapName, '/etc/nextflow', 0111) )
+        k8sConfig.getPodOptions().getMountConfigMaps().add( new PodMountConfig(configMapName, '/etc/nextflow') )
     }
 
     protected void tryCreateConfigMap(String name, Map<String,String> data) {

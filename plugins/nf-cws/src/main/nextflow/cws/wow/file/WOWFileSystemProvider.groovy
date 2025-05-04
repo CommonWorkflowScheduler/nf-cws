@@ -1,5 +1,6 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.cws.SchedulerClient
 import nextflow.file.FileSystemTransferAware
@@ -13,6 +14,7 @@ import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 
 @Slf4j
+@CompileStatic
 class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTransferAware {
 
     static final WOWFileSystemProvider INSTANCE = new WOWFileSystemProvider()

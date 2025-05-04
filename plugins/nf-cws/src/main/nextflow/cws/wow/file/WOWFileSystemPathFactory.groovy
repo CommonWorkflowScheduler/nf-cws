@@ -1,9 +1,11 @@
 package nextflow.cws.wow.file
 
+import groovy.transform.CompileStatic
 import nextflow.file.FileSystemPathFactory
 
 import java.nio.file.Path
 
+@CompileStatic
 class WOWFileSystemPathFactory extends FileSystemPathFactory {
 
 

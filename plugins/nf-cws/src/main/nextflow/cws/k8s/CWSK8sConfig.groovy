@@ -12,6 +12,7 @@ import nextflow.k8s.model.PodNodeSelector
 import java.nio.file.Path
 import java.util.stream.Collectors
 
+@CompileStatic
 class CWSK8sConfig extends K8sConfig {
 
     private Map<String,Object> target

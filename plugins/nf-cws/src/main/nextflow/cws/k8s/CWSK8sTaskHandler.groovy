@@ -39,12 +39,15 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private boolean failedOOM = false
 
-    CWSK8sTaskHandler( TaskRun task, CWSK8sExecutor executor ) {
+    private final String configMapName
+
+    CWSK8sTaskHandler( TaskRun task, CWSK8sExecutor executor, String configMapName ) {
         super( task, executor )
         this.client = executor.getCWSK8sClient()
         this.schedulerClient = executor.schedulerClient
         this.executor = executor
         this.syntheticPodName = super.getSyntheticPodName(task)
+        this.configMapName = configMapName
     }
 
     @Override
@@ -58,6 +61,20 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         if ( (k8sConfig as CWSK8sConfig)?.getScheduler() ){
             (pod.spec as Map).schedulerName = (k8sConfig as CWSK8sConfig).getScheduler().getName() + "-" + getRunName()
         }
+
+        //Set default mode for configMap
+        Map specs = pod.spec as Map
+        List<Map> volumes = specs?.volumes as List<Map>
+        if ( volumes ) {
+            for ( Map vol : volumes ) {
+                if ( (vol.configMap as Map)?.name == configMapName ) {
+                    Map configMap = vol.configMap as Map
+                    configMap.defaultMode = 0755
+                    break
+                }
+            }
+        }
+
         return pod
     }
 
@@ -145,7 +162,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     protected BashWrapperBuilder createBashWrapper(TaskRun task) {
         CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
         if ( cwsK8sConfig?.locationAwareScheduling() ) {
-            return new WOWK8sWrapperBuilder( task , cwsK8sConfig.getStorage() )
+            return new WOWK8sWrapperBuilder( task , cwsK8sConfig.getStorage(), executor.getCWSConfig().memoryPredictor as boolean )
         }
         return fusionEnabled()
                 ? fusionLauncher()
@@ -228,14 +245,15 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
             if( value == null )
                 continue
             switch( name ) {
-                case "scheduler_nodes_cost" :
+                case 'scheduler_nodes_cost' :
+                case 'scheduler_time_delta_phase_three' :
                     traceRecord.put( name, value )
                     break
-                case "scheduler_best_cost" :
+                case 'scheduler_best_cost' :
                     double val = parseDouble( value, file, name )
                     traceRecord.put( name, val )
                     break
-                case "input_size" :
+                case 'input_size' :
                     traceRecord.put( name, inputSize )
                     break
                 default:

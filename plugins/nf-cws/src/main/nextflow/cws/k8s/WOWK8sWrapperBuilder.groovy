@@ -16,15 +16,16 @@ import java.nio.file.Path
  */
 @CompileStatic
 @Slf4j
-class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
+class WOWK8sWrapperBuilder extends CWSK8sWrapperBuilder {
 
     CWSK8sConfig.Storage storage
     Path localWorkDir
 
     static String statFileName = "getStatsAndSymlinks"
 
-    WOWK8sWrapperBuilder(TaskRun task, CWSK8sConfig.Storage storage) {
-        this(task)
+    WOWK8sWrapperBuilder(TaskRun task, CWSK8sConfig.Storage storage, boolean memoryPredictorEnabled) {
+        super(task, memoryPredictorEnabled)
+        this.headerScript = "NXF_CHDIR=${Escape.path(task.workDir)}"
         this.storage = storage
         if( storage ){
             switch (storage.getCopyStrategy().toLowerCase()) {
@@ -46,10 +47,6 @@ class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
         }
     }
 
-    WOWK8sWrapperBuilder(TaskRun task) {
-        super(task)
-        this.headerScript = "NXF_CHDIR=${Escape.path(task.workDir)}"
-    }
     /**
      * only for testing purpose -- do not use
      */
@@ -95,9 +92,7 @@ class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
     protected String getLaunchCommand(String interpreter, String env) {
         String cmd = ''
         if( storage && localWorkDir ){
-            cmd += "[[ -f \"${getStorageLocalWorkDir()}/${statFileName}\" ]] || cp \"/etc/nextflow/${statFileName}\" \"${getStorageLocalWorkDir()}\"\n"
-            cmd += "chmod +x \"${getStorageLocalWorkDir()}/${statFileName}\"\n"
-            cmd += "local INFILESTIME=\$(\"${getStorageLocalWorkDir()}/${statFileName}\" infiles \"${workDir.toString()}/.command.infiles\" \"${getStorageLocalWorkDir()}\" \"\$PWD/\" || true)\n"
+            cmd += "local INFILESTIME=\$(\"/etc/nextflow/${statFileName}\" infiles \"${workDir.toString()}/.command.infiles\" \"${getStorageLocalWorkDir()}\" \"\$PWD/\" || true)\n"
         }
         cmd += super.getLaunchCommand(interpreter, env)
         if( storage && localWorkDir && isTraceRequired() ){
@@ -113,7 +108,7 @@ class WOWK8sWrapperBuilder extends K8sWrapperBuilder {
         String cmd = super.getCleanupCmd( scratch )
         if( storage && localWorkDir ){
             cmd += "mkdir -p \"${localWorkDir.toString()}/\" || true\n"
-            cmd += "local OUTFILESTIME=\$(\"${getStorageLocalWorkDir()}/${statFileName}\" outfiles \"${workDir.toString()}/.command.outfiles\" \"${getStorageLocalWorkDir()}\" \"${localWorkDir.toString()}/\" || true)\n"
+            cmd += "local OUTFILESTIME=\$(\"/etc/nextflow/${statFileName}\" outfiles \"${workDir.toString()}/.command.outfiles\" \"${getStorageLocalWorkDir()}\" \"${localWorkDir.toString()}/\" || true)\n"
             if ( isTraceRequired() ) {
                 cmd += "echo \"outfiles_time=\${OUTFILESTIME}\" >> ${workDir.resolve(TaskRun.CMD_TRACE)}"
             }
