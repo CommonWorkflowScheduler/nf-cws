@@ -12,7 +12,7 @@ import java.nio.file.Path
 @CompileStatic
 class WorkdirPath extends OfflineLocalPath {
 
-    WorkdirPath(Path path, LocalFileWalker.FileAttributes attributes, Path workDir, WorkdirHelper workdirHelper) {
+    WorkdirPath(Path path, WOWFileAttributes attributes, Path workDir, WorkdirHelper workdirHelper) {
         super(path, attributes, workDir, workdirHelper)
     }
 

@@ -31,9 +31,13 @@ import java.nio.file.Paths
 @CompileStatic
 @ServiceName('k8s')
 class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
+
     @PackageScope SchedulerClient schedulerClient
+
     @PackageScope CWSSchedulerBatch schedulerBatch
+
     protected CWSK8sClient client
+
     /**
      * Name of the created daemonSet
      */
@@ -46,13 +50,16 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
     protected K8sConfig getK8sConfig() {
         return new CWSK8sConfig( (Map<String,Object>)session.config.k8s )
     }
+
     @Memoized
     @PackageScope CWSConfig getCWSConfig(){
         new CWSConfig(session.config.navigate('cws') as Map)
     }
+
     @PackageScope CWSK8sClient getCWSK8sClient() {
         client
     }
+
     /**
      * @return A {@link nextflow.processor.TaskMonitor} associated to this executor type
      */
@@ -64,6 +71,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         }
         return CWSTaskPollingMonitor.create( session, name, 100, Duration.of('5 sec'), this.schedulerBatch )
     }
+
     /**
      * Creates a {@link nextflow.processor.TaskHandler} for the given {@link nextflow.processor.TaskRun} instance
      *
@@ -147,9 +155,20 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         this.schedulerBatch?.setSchedulerClient( schedulerClient )
         schedulerClient.registerScheduler( data )
     }
+
     @Override
     void shutdown() {
         final CWSK8sConfig.K8sScheduler schedulerConfig = (k8sConfig as CWSK8sConfig).getScheduler()
+
+        int remaining
+        do {
+            remaining = schedulerClient.getRemainingToPublish()
+            if( remaining > 0 ) {
+                log.info "Waiting for $remaining files to be published"
+                sleep( 1000 )
+            }
+        } while( remaining > 0 )
+
         if( schedulerConfig ) {
             try{
                 schedulerClient.closeScheduler()
@@ -175,11 +194,11 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         String architectureStatFileName
         final String architecture = System.getProperty("os.arch")
         if (architecture == "amd64" || architecture == "x86_64") {
-            architectureStatFileName = "/nf-cws/getStatsAndResolveSymlinks_linux_x86"
+            architectureStatFileName = "/nf-cws/getStatsAndResolveSymlinks_linux_x86_64"
         } else if (architecture == "aarch64" || architecture == "arm64") {
             architectureStatFileName = "/nf-cws/getStatsAndResolveSymlinks_linux_aarch64"
         } else {
-            throw new RuntimeException("The ${architecture} architecture is by default not supported for WOW." +
+            throw new RuntimeException("The ${architecture} architecture is currently not supported for WOW. " +
                     "You may compile the getStatsAndResolveSymlinks.c yourself and add it to the resources directory.")
         }
         final contentStream = CWSK8sExecutor.class.getResourceAsStream(architectureStatFileName)

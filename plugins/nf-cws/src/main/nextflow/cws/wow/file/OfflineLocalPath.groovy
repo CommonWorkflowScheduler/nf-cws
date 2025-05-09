@@ -1,6 +1,7 @@
 package nextflow.cws.wow.file
 
 import groovy.transform.CompileStatic
+
 import java.nio.file.Path
 
 /**
@@ -9,14 +10,9 @@ import java.nio.file.Path
 @CompileStatic
 class OfflineLocalPath extends LocalPath {
 
-    final protected WorkdirHelper workdirHelper
+    final WorkdirHelper workdirHelper
 
-    private OfflineLocalPath(){
-        this(null, null, null, null)
-    }
-
-
-    OfflineLocalPath( Path path, LocalFileWalker.FileAttributes attributes, Path workDir, WorkdirHelper workdirHelper ) {
+    OfflineLocalPath(Path path, WOWFileAttributes attributes, Path workDir, WorkdirHelper workdirHelper ) {
         super(path, attributes, workDir)
         this.workdirHelper = workdirHelper
     }

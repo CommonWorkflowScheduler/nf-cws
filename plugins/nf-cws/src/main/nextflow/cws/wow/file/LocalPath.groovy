@@ -2,99 +2,38 @@ package nextflow.cws.wow.file
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import nextflow.cws.k8s.K8sSchedulerClient
-import sun.net.ftp.FtpClient
+import nextflow.cws.wow.filesystem.WOWFileSystem
 
 import java.nio.file.*
-import java.nio.file.attribute.BasicFileAttributes
 
 @Slf4j
 @CompileStatic
 class LocalPath implements Path, Serializable {
 
     protected final Path path
-    private transient final LocalFileWalker.FileAttributes attributes
-    private static transient K8sSchedulerClient client = null
-    protected Path workDir
-    private boolean createdSymlinks = false
-    private transient final Object createSymlinkHelper = new Object()
 
-    protected LocalPath(Path path, LocalFileWalker.FileAttributes attributes, Path workDir ) {
+    private transient final WOWFileAttributes attributes
+
+    boolean createdSymlinks = false
+
+    protected Path workDir
+
+    protected LocalPath(Path path, WOWFileAttributes attributes, Path workDir ) {
         this.path = path
         this.attributes = attributes
         this.workDir = workDir
     }
 
-    private LocalPath(){
-        path = null
-        this.attributes = null
-        this.workDir = null
-    }
-
     Path getInner() {
-        return path
+        path
     }
 
-    LocalPath toLocalPath( Path path, LocalFileWalker.FileAttributes attributes = null ){
+    LocalPath toLocalPath( Path path, WOWFileAttributes attributes = null ){
         toLocalPath( path, attributes, workDir )
     }
 
-    static LocalPath toLocalPath( Path path, LocalFileWalker.FileAttributes attributes, Path workDir ){
+    static LocalPath toLocalPath( Path path, WOWFileAttributes attributes, Path workDir ){
         ( path instanceof LocalPath ) ? path as LocalPath : new LocalPath( path, attributes, workDir )
-    }
-
-    static void setClient( K8sSchedulerClient client ){
-        if ( !this.client ) this.client = client
-        else throw new IllegalStateException("Client was already set.")
-    }
-
-    static FtpClient getConnection(final String node, String daemon ){
-        int trial = 0
-        while ( true ) {
-            try {
-                FtpClient ftpClient = FtpClient.create(daemon)
-                ftpClient.login("root", "password".toCharArray() )
-                ftpClient.enablePassiveMode( true )
-                ftpClient.setBinaryType()
-                return ftpClient
-            } catch ( IOException e ) {
-                if ( trial > 5 ) throw e
-                log.error("Cannot create FTP client: $daemon on $node", e)
-                sleep(Math.pow(2, trial++) as long)
-                daemon = client.getDaemonOnNode(node)
-            }
-        }
-    }
-
-    Map getLocation() { getLocation(path.toAbsolutePath().toString()) }
-
-    Map getLocation( String absolutePath ){
-        Map response = client.getFileLocation( absolutePath )
-        synchronized ( createSymlinkHelper ) {
-            if ( !createdSymlinks ) {
-                for ( Map link : (response.symlinks as List<Map>)) {
-                    Path src = link.src as Path
-                    Path dst = link.dst as Path
-                    if (Files.exists(src, LinkOption.NOFOLLOW_LINKS)) {
-                        try {
-                            if (src.isDirectory()) src.deleteDir()
-                            else Files.delete(src)
-                        } catch ( Exception ignored){
-                            log.warn( "Unable to delete " + src )
-                        }
-                    } else {
-                        src.parent.toFile().mkdirs()
-                    }
-                    try{
-                        Files.createSymbolicLink(src, dst)
-                    } catch ( Exception ignored){
-                        log.warn( "Unable to create symlink: "  + src + " -> " + dst )
-                    }
-                }
-                createdSymlinks = true
-            }
-        }
-        response
     }
 
     <T> T asType( Class<T> c ) {
@@ -118,7 +57,6 @@ class LocalPath implements Path, Serializable {
     }
 
     boolean empty(){
-        //TODO empty file?
         this.size() == 0
     }
 
@@ -188,19 +126,17 @@ class LocalPath implements Path, Serializable {
 
     @Override
     Path normalize() {
-        toLocalPath( path.normalize() )
+        toLocalPath( path.normalize(), attributes )
     }
 
     @Override
     Path resolve(Path other) {
-        //TODO other attributes
-        toLocalPath( path.resolve( other ) )
+        toLocalPath( path.resolve( other ), new WOWFileAttributes( other ) )
     }
 
     @Override
     Path resolve(String other) {
-        //TODO other attributes
-        toLocalPath( path.resolve( other ) )
+        resolve( Path.of( other ) )
     }
 
     @Override
@@ -217,22 +153,22 @@ class LocalPath implements Path, Serializable {
     Path relativize(Path other) {
         if ( other instanceof LocalPath ){
             def localPath = (LocalPath) other
-            return toLocalPath( path.relativize( localPath.path), (LocalFileWalker.FileAttributes) localPath.attributes, localPath.workDir )
+            return toLocalPath( path.relativize( localPath.path), (WOWFileAttributes) localPath.attributes, localPath.workDir )
         }
         path.relativize( other )
     }
 
     @Override
     URI toUri() {
-        return getFileSystem().provider().getScheme() + "://" + path.toAbsolutePath() as URI
+        getFileSystem().provider().getScheme() + "://" + path.toAbsolutePath() as URI
     }
 
     String toUriString() {
-        return getFileSystem().provider().getScheme() + ":/" + path.toAbsolutePath()
+        getFileSystem().provider().getScheme() + ":/" + path.toAbsolutePath()
     }
 
     Path toAbsolutePath(){
-        toLocalPath( path.toAbsolutePath() )
+        toLocalPath( path.toAbsolutePath(), attributes )
     }
 
     @Override
@@ -268,7 +204,7 @@ class LocalPath implements Path, Serializable {
         path.toString()
     }
 
-    BasicFileAttributes getAttributes(){
+    WOWFileAttributes getAttributes(){
         attributes
     }
 
@@ -285,6 +221,7 @@ class LocalPath implements Path, Serializable {
 
     @Override
     int hashCode() {
-        return path.hashCode() * 2 + 1
+        path.hashCode() * 2 + 1
     }
+
 }

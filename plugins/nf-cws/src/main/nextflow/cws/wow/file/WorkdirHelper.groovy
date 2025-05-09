@@ -11,16 +11,14 @@ import java.nio.file.Path
 class WorkdirHelper {
 
     private final Map<Path, LocalPath> paths
+
     private final Path rootPath
+
     private boolean validated = false
 
     WorkdirHelper( Path rootPath, Map<Path, LocalPath> paths) {
         this.rootPath = rootPath
         this.paths = paths
-    }
-
-    private WorkdirHelper() {
-        this(null, null)
     }
 
     void validate() {
@@ -39,7 +37,7 @@ class WorkdirHelper {
     }
 
     Path relativeToWorkdir( LocalPath path ) {
-        new LocalPath( rootPath.relativize( path.path ), (LocalFileWalker.FileAttributes) path.getAttributes(), path.workDir )
+        new LocalPath( rootPath.relativize( path.path ), path.getAttributes(), path.workDir )
     }
 
     int getNameCount() {
@@ -78,4 +76,5 @@ class WorkdirHelper {
                 ", validated=" + validated +
                 '}'
     }
+
 }

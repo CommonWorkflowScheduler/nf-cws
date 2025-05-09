@@ -1,4 +1,4 @@
-package nextflow.cws.wow.file
+package nextflow.cws.wow.util
 
 import groovy.transform.CompileStatic
 
@@ -32,7 +32,8 @@ final class DateParser {
     }
 
     static FileTime fileTimeFromString( String date ) {
-        final Long millisFromSring = millisFromString( date )
-        return millisFromSring == null ? null : FileTime.fromMillis( millisFromSring )
+        final Long millisFromString = millisFromString( date )
+        return millisFromString == null ? null : FileTime.fromMillis( millisFromString )
     }
+
 }

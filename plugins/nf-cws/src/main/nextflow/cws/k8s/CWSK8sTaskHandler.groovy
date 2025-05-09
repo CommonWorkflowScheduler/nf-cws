@@ -67,6 +67,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         List<Map> volumes = specs?.volumes as List<Map>
         if ( volumes ) {
             for ( Map vol : volumes ) {
+                if ( vol.configMap == null ) continue
                 if ( (vol.configMap as Map)?.name == configMapName ) {
                     Map configMap = vol.configMap as Map
                     configMap.defaultMode = 0755
@@ -115,7 +116,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
-    private long calculateInputSize( List<Map<String,Object>> fileInputs ){
+    private static long calculateInputSize(List<Map<String,Object>> fileInputs ){
         return fileInputs
                 .parallelStream()
                 .mapToLong {
@@ -263,7 +264,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
-    private double parseDouble( String str, Path file , String row )  {
+    private static double parseDouble(String str, Path file, String row )  {
         try {
             return str.toDouble()
         }
@@ -273,7 +274,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
-    private long parseLong( String str, Path file , String row )  {
+    private static long parseLong(String str, Path file, String row )  {
         try {
             return str.toLong()
         }

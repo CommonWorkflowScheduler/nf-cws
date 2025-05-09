@@ -1,5 +1,6 @@
 package nextflow.cws.wow.file
 
+
 import spock.lang.Specification
 
 import java.nio.file.Path
@@ -21,7 +22,7 @@ class WorkdirPathTest extends Specification {
         Map<Path, LocalPath> files = new HashMap<>()
         files.put(workDir.resolve("file.txt"), localPath)
         def helper = new WorkdirHelper( Path.of("/localdata/localwork/be/8292aaebea2ddf9ae8ad4952882dcb/"), files )
-        def attributes = new LocalFileWalker.FileAttributes(workDir)
+        def attributes = new WOWFileAttributes(workDir)
         WorkdirPath path = new WorkdirPath( workDir, attributes, workDir, helper )
 
         then:

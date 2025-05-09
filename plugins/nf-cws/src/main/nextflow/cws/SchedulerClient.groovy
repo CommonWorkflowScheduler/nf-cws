@@ -5,18 +5,25 @@ import groovy.json.JsonSlurper
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import nextflow.cws.wow.file.WOWFileSystemProvider
+import nextflow.cws.wow.filesystem.WOWFileSystemProvider
 import nextflow.dag.DAG
+
+import java.nio.file.Path
 
 @Slf4j
 @CompileStatic
 class SchedulerClient {
 
     private final CWSConfig config
+
     private final String runName
+
     private boolean registered = false
+
     private boolean closed = false
+
     private int tasksInBatch = 0
+
     protected String dns
 
     SchedulerClient( CWSConfig config, String runName ) {
@@ -138,8 +145,8 @@ class SchedulerClient {
 
     }
 
-
     ///* DAG */
+
     @CompileDynamic
     void submitVertices( List<DAG.Vertex> vertices ){
         List<Map< String, Object >> verticesToSubmit = vertices.collect {
@@ -239,4 +246,34 @@ class SchedulerClient {
         }
 
     }
+
+    void publish(Path source, Path destination, String mode ) {
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName/publish").toURL().openConnection() as HttpURLConnection
+        get.setRequestMethod( "PUT" )
+        get.setDoOutput(true)
+        Map data = [
+                'source'      : source.toString(),
+                'destination' : destination.toString(),
+                'mode'        : mode.toUpperCase(),
+        ]
+        String message = JsonOutput.toJson( data )
+        get.setRequestProperty("Content-Type", "application/json")
+        get.getOutputStream().write(message.getBytes("UTF-8"))
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while publishing file: $source (${get.responseMessage}) -- ${get.getURL()}" )
+        }
+    }
+
+    int getRemainingToPublish() {
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName/publish").toURL().openConnection() as HttpURLConnection
+        get.setRequestMethod( "GET" )
+        get.setRequestProperty("Content-Type", "application/json")
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while getting remaining to publish (${get.responseMessage})" )
+        }
+        get.getInputStream().text as int
+    }
+
 }

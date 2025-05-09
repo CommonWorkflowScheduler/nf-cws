@@ -3,7 +3,6 @@ package nextflow.cws.k8s
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.file.FileHelper
-import nextflow.k8s.K8sWrapperBuilder
 import nextflow.processor.TaskRun
 import nextflow.util.Escape
 
@@ -46,11 +45,6 @@ class WOWK8sWrapperBuilder extends CWSK8sWrapperBuilder {
             }
         }
     }
-
-    /**
-     * only for testing purpose -- do not use
-     */
-    protected K8sWrapperBuilder() {}
 
     @Override
     protected boolean shouldUnstageOutputs() {

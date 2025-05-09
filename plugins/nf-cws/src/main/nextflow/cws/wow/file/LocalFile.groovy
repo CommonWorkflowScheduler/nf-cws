@@ -18,4 +18,5 @@ class LocalFile extends File {
     Path toPath() {
         return localPath
     }
+
 }

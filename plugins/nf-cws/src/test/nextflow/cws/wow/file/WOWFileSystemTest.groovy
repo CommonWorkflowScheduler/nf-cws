@@ -1,5 +1,6 @@
 package nextflow.cws.wow.file
 
+import nextflow.cws.wow.filesystem.WOWFileSystem
 import spock.lang.Specification
 
 import java.nio.file.Path

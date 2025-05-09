@@ -15,10 +15,6 @@ import java.nio.file.Path
 @CompileStatic
 class CWSK8sClient extends K8sClient {
 
-    CWSK8sClient(K8sClient k8sClient) {
-        super(k8sClient.config)
-    }
-
     CWSK8sClient(ClientConfig config) {
         super(config)
     }

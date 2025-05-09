@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 abstract class SchedulerBatch {
 
     private final int batchSize
+
     private int currentlySubmitted = 0
 
     SchedulerBatch( int batchSize ) {

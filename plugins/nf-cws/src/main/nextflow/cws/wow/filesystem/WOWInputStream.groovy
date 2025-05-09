@@ -1,7 +1,8 @@
-package nextflow.cws.wow.file
+package nextflow.cws.wow.filesystem
 
 import groovy.transform.CompileStatic
 import nextflow.cws.SchedulerClient
+import nextflow.cws.wow.file.LocalPath
 import sun.net.ftp.FtpClient
 
 @CompileStatic
@@ -40,7 +41,7 @@ class WOWInputStream extends InputStream {
         temporaryFile.moveTo(file)
         transferredTemporaryFile = true
 
-        Map location = path.getLocation()
+        Map location = WOWFileSystemProvider.INSTANCE.getLocation( path )
         schedulerClient.addFileLocation(path.toString(), file.size(), file.lastModified(), location.locationWrapperID as long, false)
     }
 
@@ -68,4 +69,5 @@ class WOWInputStream extends InputStream {
         ftpClient.close()
         checkTemporaryFileTransferal()
     }
+
 }
