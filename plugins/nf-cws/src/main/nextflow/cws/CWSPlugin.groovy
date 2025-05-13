@@ -44,7 +44,6 @@ class CWSPlugin extends BasePlugin {
                 scheduler_delta_submitted_batch_end:   'num',
                 memory_adapted:                        'mem',
                 input_size:                            'num',
-                out_label:                             'str',
                 scheduler_files_bytes:                 'num',
                 scheduler_files_node_bytes:            'num',
                 scheduler_files_node_other_task_bytes: 'num',
