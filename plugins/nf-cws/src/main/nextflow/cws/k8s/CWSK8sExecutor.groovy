@@ -161,6 +161,8 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
     void shutdown() {
         final CWSK8sConfig.K8sScheduler schedulerConfig = (k8sConfig as CWSK8sConfig).getScheduler()
 
+        schedulerClient.publishRemaining();
+
         int remaining
         do {
             remaining = schedulerClient.getRemainingToPublish()

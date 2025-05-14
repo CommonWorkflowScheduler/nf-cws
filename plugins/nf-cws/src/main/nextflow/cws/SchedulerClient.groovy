@@ -265,6 +265,15 @@ class SchedulerClient {
         }
     }
 
+    void publishRemaining() {
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName/publish").toURL().openConnection() as HttpURLConnection
+        get.setRequestMethod( "POST" )
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, when triggering publish (${get.responseMessage}) -- ${get.getURL()}" )
+        }
+    }
+
     int getRemainingToPublish() {
         HttpURLConnection get = URI.create("${getDNS()}/file/$runName/publish").toURL().openConnection() as HttpURLConnection
         get.setRequestMethod( "GET" )
