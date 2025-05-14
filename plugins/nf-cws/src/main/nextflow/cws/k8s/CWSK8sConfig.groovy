@@ -170,7 +170,7 @@ class CWSK8sConfig extends K8sConfig {
         }
 
         String getImageName() {
-            target.imageName ?: 'commonworkflowscheduler/ftpdaemon:v1.0'
+            target.imageName ?: 'commonworkflowscheduler/ftpdaemon:v2.0'
         }
 
         String getCmd() {
