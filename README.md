@@ -61,7 +61,7 @@ k8s {
         imagePullPolicy = 'IfNotPresent'
         cpu = '2'
         memory = '1400Mi'
-        container = 'commonworkflowscheduler/kubernetesscheduler:v1.0'
+        container = 'commonworkflowscheduler/kubernetesscheduler:v2.1'
         command = null
         port = 8080
         workDir = '/scheduler'
