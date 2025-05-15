@@ -102,7 +102,7 @@ class CWSK8sConfig extends K8sConfig {
 
         String getMemory() { target.memory as String ?: "1400Mi" }
 
-        String getContainer() { target.container as String ?: 'commonworkflowscheduler/kubernetesscheduler:latest' }
+        String getContainer() { target.container as String ?: 'commonworkflowscheduler/kubernetesscheduler:v2.1' }
 
         String getCommand() { target.command as String }
 
