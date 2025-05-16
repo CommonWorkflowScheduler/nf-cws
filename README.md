@@ -1,14 +1,15 @@
 # nf-cws plugin
 
 This plugin enables Nextflow to communicate with a Common Workflow Scheduler instance and transfer the required
-information, which simplifies development of scheduling algorithms.
+information.
 
-Additionally, this plugin also provides scheduling algorithms for:
-- dynamic task resizing 
+Together with the Common Workflow Scheduler, the plugin enables you:
+- to use more sophisticated scheduling strategies [(More information)](https://arxiv.org/pdf/2302.07652.pdf)
+- automatically resize the memory of your memory if your estimation is too high [(More information)](https://arxiv.org/pdf/2408.00047.pdf)
+- keep your intermediate data locally at the worker node - this saves 18% of makespan for RNA-Seq, and 95% of makespan for I/O intensive task chaining [(More information)](https://arxiv.org/pdf/2503.13072.pdf)
 
 For more information on the scheduling,
-see the [scheduler repository](https://github.com/CommonWorkflowScheduler/KubernetesScheduler) and the [respective
-papers](#citation).
+see the [scheduler repository](https://github.com/CommonWorkflowScheduler/KubernetesScheduler).
 
 ### Supported Executors
 
