@@ -3,4 +3,4 @@ Plugin-Id: nf-cws
 Plugin-Version: 2.0.0
 Plugin-Class: nextflow.cws.CWSPlugin
 Plugin-Provider: nextflow
-Plugin-Requires: >=23.05.0-edge
+Plugin-Requires: >=24.04.0
