@@ -69,9 +69,9 @@ class WOWFileAttributes implements BasicFileAttributes {
             this.local = true
             this.fileType = fileType
         }
-        this.directory = fileType == 'directory'
-        if ( !directory && !fileType.contains( 'file' ) ){
-            log.error( "Unknown type: $fileType" )
+        this.directory = this.fileType == 'directory'
+        if ( !directory && !this.fileType.contains( 'file' ) ){
+            log.error( "Unknown type: ${this.fileType}" )
         }
     }
 
