@@ -16,15 +16,9 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
-}
 
-compileJava {
-    options.release.set(17)
-}
-
-tasks.withType(GroovyCompile) {
-    sourceCompatibility = '17'
-    targetCompatibility = '17'
+    sourceCompatibility = 17
+    targetCompatibility = 17
 }
 
 tasks.withType(Test) {
