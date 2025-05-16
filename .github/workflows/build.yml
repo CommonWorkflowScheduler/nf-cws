@@ -35,7 +35,9 @@ jobs:
           sudo apt-get install -y clang lld gcc-aarch64-linux-gnu libc6-dev-arm64-cross
 
       - name: Compile using make
-        run: make c_scripts
+        run: |
+          make c_scripts
+          ls -la plugins/nf-cws/src/resources/nf-cws
 
       - name: Setup Java ${{ matrix.java_version }}
         uses: actions/setup-java@v3
@@ -43,10 +45,6 @@ jobs:
           java-version: ${{matrix.java_version}}
           architecture: x64
           distribution: 'temurin'
-
-      - name: Check files
-        run: |
-          ls -lisah plugins/nf-cws/src/resources/nf-cws/
 
       - name: Compile
         run: ./gradlew assemble
