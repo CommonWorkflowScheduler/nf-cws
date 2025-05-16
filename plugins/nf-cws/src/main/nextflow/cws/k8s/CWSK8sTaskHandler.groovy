@@ -3,6 +3,7 @@ package nextflow.cws.k8s
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import nextflow.cws.CWSConfig
 import nextflow.cws.SchedulerClient
 import nextflow.executor.BashWrapperBuilder
 import nextflow.extension.GroupKey
@@ -63,7 +64,8 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
             (pod.spec as Map).schedulerName = cwsK8sConfig.getScheduler().getName() + "-" + getRunName()
         }
 
-        if ( cwsK8sConfig.locationAwareScheduling() ) {
+        final CWSConfig cwsConfig = executor.getCWSConfig()
+        if ( cwsConfig.strategyIsLocationAware() ) {
             //Set default mode for configMap
             Map specs = pod.spec as Map
             List<Map> volumes = specs?.volumes as List<Map>
@@ -164,9 +166,10 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     @Override
     protected BashWrapperBuilder createBashWrapper(TaskRun task) {
-        CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
-        if ( cwsK8sConfig?.locationAwareScheduling() ) {
-            return new WOWK8sWrapperBuilder( task , cwsK8sConfig.getStorage(), executor.getCWSConfig().memoryPredictor as boolean )
+        final CWSConfig cwsConfig = executor.getCWSConfig()
+        final CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
+        if ( cwsConfig.strategyIsLocationAware() ) {
+            return new WOWK8sWrapperBuilder( task , cwsK8sConfig.getStorage(), cwsConfig.memoryPredictor as boolean )
         }
         return fusionEnabled()
                 ? fusionLauncher()
@@ -208,7 +211,8 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     @Override
     boolean checkIfCompleted() {
         Map state = getState()
-        if( !state || !state.terminated || ( (k8sConfig as CWSK8sConfig)?.locationAwareScheduling() && !schedulerPostProcessingHasFinished() ) ) {
+        final CWSConfig cwsConfig = executor.getCWSConfig()
+        if( !state || !state.terminated || ( cwsConfig.strategyIsLocationAware() && !schedulerPostProcessingHasFinished() ) ) {
             return false
         }
         if( executor.getCWSConfig().memoryPredictor ) {

@@ -48,7 +48,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
     @Override
     @Memoized
     protected K8sConfig getK8sConfig() {
-        return new CWSK8sConfig( (Map<String,Object>)session.config.k8s )
+        return new CWSK8sConfig( (Map<String,Object>)session.config.k8s, getCWSConfig().strategyIsLocationAware() )
     }
 
     @Memoized
@@ -100,15 +100,15 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         this.client = new CWSK8sClient(clientConfig)
         log.debug "[K8s] config=$k8sConfig; API client config=$clientConfig"
 
+        final CWSConfig cwsConfig = getCWSConfig()
         final CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
 
-        if ( cwsK8sConfig.locationAwareScheduling() ) {
+        if ( cwsConfig.strategyIsLocationAware() ) {
             createDaemonSet()
             registerGetStatsConfigMap( cwsK8sConfig.getArchitecture() )
         }
 
         CWSK8sConfig.K8sScheduler k8sSchedulerConfig = cwsK8sConfig.getScheduler()
-        final CWSConfig cwsConfig = new CWSConfig(session.config.navigate('cws') as Map)
         Map data
 
         if ( !k8sSchedulerConfig && !cwsConfig.dns ) {
@@ -141,7 +141,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
                     workDir : session.workDir as String,
                     localWorkDir : storage?.getWorkdir(),
                     copyStrategy : storage?.getCopyStrategy(),
-                    locationAware : cwsK8sConfig.locationAwareScheduling(),
+                    locationAware : cwsConfig.strategyIsLocationAware(),
                     maxCopyTasksPerNode : cwsConfig.getMaxCopyTasksPerNode(),
                     maxWaitingCopyTasksPerNode : cwsConfig.getMaxWaitingCopyTasksPerNode()
             ]
@@ -164,7 +164,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
 
         schedulerClient.publishRemaining();
 
-        if ( cwsK8sConfig.locationAwareScheduling() ) {
+        if ( getCWSConfig().strategyIsLocationAware() ) {
             int remaining
             do {
                 remaining = schedulerClient.getRemainingToPublish()
