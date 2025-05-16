@@ -1,17 +1,28 @@
 package nextflow.cws.processor
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.Session
+import nextflow.cws.CWSConfig
+import nextflow.cws.wow.file.OfflineLocalPath
+import nextflow.cws.wow.file.WOWFileAttributes
+import nextflow.cws.wow.file.WorkdirPath
+import nextflow.cws.wow.util.LocalFileWalker
+import nextflow.processor.PublishDir
+import nextflow.processor.TaskHandler
 import nextflow.processor.TaskPollingMonitor
 import nextflow.util.Duration
 
 @Slf4j
+@CompileStatic
 class CWSTaskPollingMonitor extends TaskPollingMonitor {
 
     /**
      * Object to batch the task submission to achieve a better scheduling plan
      */
     private final SchedulerBatch schedulerBatch
+
+    private final CWSConfig cwsConfig
 
     /**
      * Create the task polling monitor with the provided named parameters object.
@@ -28,6 +39,7 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
     protected CWSTaskPollingMonitor(Map params) {
         super(params)
         this.schedulerBatch = params.schedulerBatch as SchedulerBatch
+        cwsConfig = new CWSConfig(session.config.navigate('cws') as Map)
     }
 
     static TaskPollingMonitor create(Session session, String name, int defQueueSize, Duration defPollInterval, SchedulerBatch schedulerBatch ) {
@@ -54,4 +66,38 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
         return pendingTasks
     }
 
+    private static void checkPublishDirMode(TaskHandler handler ) {
+        def publishDirs = handler.task.config.get('publishDir')
+        if ( publishDirs && publishDirs instanceof List ) {
+            for( Object params : publishDirs ) {
+                if( !params ) continue
+                if( params instanceof Map ) {
+                    def mode = PublishDir.create(params).getMode()
+                    // We only support COPY and MOVE, if the user uses a different mode, we set it to COPY
+                    if ( !(mode in [ PublishDir.Mode.COPY, PublishDir.Mode.MOVE]) ) {
+                        params.mode = PublishDir.Mode.COPY
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void finalizeTask(TaskHandler handler) {
+        if (!cwsConfig.strategyIsLocationAware()) {
+            super.finalizeTask(handler)
+            return
+        }
+        def workDir = handler.task.workDir
+        def helper = LocalFileWalker.createWorkdirHelper( workDir )
+        if ( helper ) {
+            def attributes = new WOWFileAttributes(workDir)
+            OfflineLocalPath path = new WorkdirPath( workDir, attributes, workDir, helper )
+            handler.task.workDir = path
+        }
+        checkPublishDirMode(handler)
+        super.finalizeTask(handler)
+        helper?.validate()
+    }
+    
 }

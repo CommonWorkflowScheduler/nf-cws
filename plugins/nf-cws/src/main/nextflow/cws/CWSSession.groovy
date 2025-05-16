@@ -1,8 +1,11 @@
 package nextflow.cws
 
+import groovy.transform.CompileStatic
+
 /**
  * Central, global instance to manage all generated Executor instances
  */
+@CompileStatic
 class CWSSession {
 
     static final CWSSession INSTANCE = new CWSSession()

@@ -16,6 +16,14 @@ class CWSConfig {
 
     String getStrategy() { target.strategy as String ?: 'FIFO' }
 
+    boolean strategyIsLocationAware() {
+        switch(target.strategy) {
+            case "wow": return true
+            default:
+                return false
+        }
+    }
+
     String getCostFunction() { target.costFunction as String }
 
     String getMemoryPredictor() { target.memoryPredictor as String }
@@ -29,6 +37,10 @@ class CWSConfig {
         String s = target.minMemory as String
         return s ? new MemoryUnit(s) : null
     }
+
+    Integer getMaxCopyTasksPerNode() { target.maxCopyTasksPerNode as Integer }
+
+    Integer getMaxWaitingCopyTasksPerNode() { target.maxWaitingCopyTasksPerNode as Integer }
 
     int getBatchSize() {
         String s = target.batchSize as String

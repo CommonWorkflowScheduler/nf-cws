@@ -2,17 +2,28 @@ package nextflow.cws
 
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import nextflow.cws.wow.filesystem.WOWFileSystemProvider
 import nextflow.dag.DAG
 
+import java.nio.file.Path
+
 @Slf4j
+@CompileStatic
 class SchedulerClient {
 
     private final CWSConfig config
+
     private final String runName
+
     private boolean registered = false
+
     private boolean closed = false
+
     private int tasksInBatch = 0
+
     protected String dns
 
     SchedulerClient( CWSConfig config, String runName ) {
@@ -20,6 +31,7 @@ class SchedulerClient {
         this.runName = runName
         this.dns = config.dns?.endsWith('/') ? config.dns[0..-2] : config.dns
         CWSSession.INSTANCE.addSchedulerClient( this )
+        WOWFileSystemProvider.INSTANCE.registerSchedulerClient( this )
     }
 
     protected String getDNS() {
@@ -33,7 +45,7 @@ class SchedulerClient {
         int trials = 0
         while ( trials++ < 50 ) {
             try {
-                HttpURLConnection post = new URL(url).openConnection() as HttpURLConnection
+                HttpURLConnection post = URI.create(url).toURL().openConnection() as HttpURLConnection
                 post.setRequestMethod( "POST" )
                 post.setDoOutput(true)
                 post.setRequestProperty("Content-Type", "application/json")
@@ -59,14 +71,14 @@ class SchedulerClient {
     synchronized void closeScheduler(){
         if ( closed ) return
         closed = true
-        HttpURLConnection post = new URL("${getDNS()}/scheduler/$runName").openConnection() as HttpURLConnection
+        HttpURLConnection post = URI.create("${getDNS()}/scheduler/$runName").toURL().openConnection() as HttpURLConnection
         post.setRequestMethod( "DELETE" )
         int responseCode = post.getResponseCode()
         log.trace "Delete scheduler code was: ${responseCode}"
     }
 
     void submitMetrics( Map metrics, int id ){
-        HttpURLConnection post = new URL("${getDNS()}/scheduler/$runName/metrics/task/$id").openConnection() as HttpURLConnection
+        HttpURLConnection post = URI.create("${getDNS()}/scheduler/$runName/metrics/task/$id").toURL().openConnection() as HttpURLConnection
         post.setRequestMethod( "POST" )
         String message = JsonOutput.toJson( metrics )
         post.setDoOutput(true)
@@ -80,7 +92,7 @@ class SchedulerClient {
 
     Map registerTask( Map config, int id ){
 
-        HttpURLConnection post = new URL("${getDNS()}/scheduler/$runName/task/$id").openConnection() as HttpURLConnection
+        HttpURLConnection post = URI.create("${getDNS()}/scheduler/$runName/task/$id").toURL().openConnection() as HttpURLConnection
         post.setRequestMethod( "POST" )
         String message = JsonOutput.toJson( config )
         post.setDoOutput(true)
@@ -97,7 +109,7 @@ class SchedulerClient {
     }
 
     private void batch( String command ){
-        HttpURLConnection put = new URL("${getDNS()}/scheduler/$runName/${command}Batch").openConnection() as HttpURLConnection
+        HttpURLConnection put = URI.create("${getDNS()}/scheduler/$runName/${command}Batch").toURL().openConnection() as HttpURLConnection
         put.setRequestMethod( "PUT" )
         if ( command == 'end' ){
             put.setDoOutput(true)
@@ -121,7 +133,7 @@ class SchedulerClient {
 
     Map getTaskState( int id ){
 
-        HttpURLConnection get = new URL("${getDNS()}/scheduler/$runName/task/$id").openConnection() as HttpURLConnection
+        HttpURLConnection get = URI.create("${getDNS()}/scheduler/$runName/task/$id").toURL().openConnection() as HttpURLConnection
         get.setRequestMethod( "GET" )
         get.setDoOutput(true)
         int responseCode = get.getResponseCode()
@@ -133,9 +145,9 @@ class SchedulerClient {
 
     }
 
-
     ///* DAG */
 
+    @CompileDynamic
     void submitVertices( List<DAG.Vertex> vertices ){
         List<Map< String, Object >> verticesToSubmit = vertices.collect {
             [
@@ -144,7 +156,7 @@ class SchedulerClient {
                     uid : it.getId()
             ] as Map<String, Object>
         }
-        HttpURLConnection put = new URL("${getDNS()}/scheduler/$runName/DAG/vertices").openConnection() as HttpURLConnection
+        HttpURLConnection put = URI.create("${getDNS()}/scheduler/$runName/DAG/vertices").toURL().openConnection() as HttpURLConnection
         put.setRequestMethod( "POST" )
         String message = JsonOutput.toJson( verticesToSubmit )
         put.setDoOutput(true)
@@ -156,6 +168,7 @@ class SchedulerClient {
         }
     }
 
+    @CompileDynamic
     void submitEdges( List<DAG.Edge> edges ){
         List<Map< String, Object >> edgesToSubmit = edges.collect {
             [
@@ -165,7 +178,7 @@ class SchedulerClient {
                 to : it.getTo()?.getId()
             ] as Map<String, Object>
         }
-        HttpURLConnection put = new URL("${getDNS()}/scheduler/$runName/DAG/edges").openConnection() as HttpURLConnection
+        HttpURLConnection put = URI.create("${getDNS()}/scheduler/$runName/DAG/edges").toURL().openConnection() as HttpURLConnection
         put.setRequestMethod( "POST" )
         String message = JsonOutput.toJson( edgesToSubmit )
         put.setDoOutput(true)
@@ -175,6 +188,101 @@ class SchedulerClient {
         if( responseCode != 200 ){
             throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while submitting edges: ${edges}" )
         }
+    }
+
+    ///* File location */
+
+    Map getFileLocation( String path ){
+
+        String pathEncoded = URLEncoder.encode(path,'utf-8')
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName?path=$pathEncoded").toURL().openConnection() as HttpURLConnection
+        get.setRequestMethod( "GET" )
+        get.setDoOutput(true)
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while requesting file location: $path (${get.responseMessage})" )
+        }
+        Map response = new JsonSlurper().parse(get.getInputStream()) as Map
+        return response
+
+    }
+
+    String getDaemonOnNode( String node ){
+
+        HttpURLConnection get = URI.create("${getDNS()}/daemon/$runName/$node").toURL().openConnection() as HttpURLConnection
+        get.setRequestMethod( "GET" )
+        get.setDoOutput(true)
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while requesting daemon on node: $node" )
+        }
+        String response = new JsonSlurper().parse(get.getInputStream()) as String
+        return response
+
+    }
+
+    void addFileLocation( String path, long size, long timestamp, long locationWrapperID, boolean overwrite, String node = null ){
+
+        String method = overwrite ? 'overwrite' : 'add'
+
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName/location/${method}${ node ? "/$node" : ''}").toURL().openConnection() as HttpURLConnection
+        get.setRequestMethod( "POST" )
+        get.setDoOutput(true)
+        Map data = [
+                path      : path,
+                size      : size,
+                timestamp : timestamp,
+                locationWrapperID : locationWrapperID
+        ]
+        if ( node ){
+            data.node = node
+        }
+        String message = JsonOutput.toJson( data )
+        get.setRequestProperty("Content-Type", "application/json")
+        get.getOutputStream().write(message.getBytes("UTF-8"))
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while updating file location: $path: $node (${get.responseMessage})" )
+        }
+
+    }
+
+    void publish(Path source, Path destination, String mode ) {
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName/publish").toURL().openConnection() as HttpURLConnection
+        get.setRequestMethod( "PUT" )
+        get.setDoOutput(true)
+        Map data = [
+                'source'      : source.toString(),
+                'destination' : destination.toString(),
+                'mode'        : mode.toUpperCase(),
+        ]
+        String message = JsonOutput.toJson( data )
+        get.setRequestProperty("Content-Type", "application/json")
+        get.getOutputStream().write(message.getBytes("UTF-8"))
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while publishing file: $source (${get.responseMessage}) -- ${get.getURL()}" )
+        }
+    }
+
+    void publishRemaining() {
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName/publish").toURL().openConnection() as HttpURLConnection
+        get.setRequestMethod( "POST" )
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, when triggering publish (${get.responseMessage}) -- ${get.getURL()}" )
+        }
+    }
+
+    int getRemainingToPublish() {
+        HttpURLConnection get = URI.create("${getDNS()}/file/$runName/publish").toURL().openConnection() as HttpURLConnection
+        get.setRequestMethod( "GET" )
+        get.setRequestProperty("Content-Type", "application/json")
+        int responseCode = get.getResponseCode()
+        if( responseCode != 200 ){
+            throw new IllegalStateException( "Got code: ${responseCode} from nextflow scheduler, while getting remaining to publish (${get.responseMessage})" )
+        }
+        get.getInputStream().text as int
     }
 
 }

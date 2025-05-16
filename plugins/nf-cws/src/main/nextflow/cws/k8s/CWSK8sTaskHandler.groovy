@@ -1,7 +1,9 @@
 package nextflow.cws.k8s
 
 import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import nextflow.cws.CWSConfig
 import nextflow.cws.SchedulerClient
 import nextflow.executor.BashWrapperBuilder
 import nextflow.extension.GroupKey
@@ -15,6 +17,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 @Slf4j
+@CompileStatic
 class CWSK8sTaskHandler extends K8sTaskHandler {
 
     static final public String CMD_TRACE_SCHEDULER = '.command.scheduler.trace'
@@ -37,12 +40,15 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
 
     private boolean failedOOM = false
 
-    CWSK8sTaskHandler( TaskRun task, CWSK8sExecutor executor ) {
+    private final String configMapName
+
+    CWSK8sTaskHandler( TaskRun task, CWSK8sExecutor executor, String configMapName ) {
         super( task, executor )
         this.client = executor.getCWSK8sClient()
         this.schedulerClient = executor.schedulerClient
         this.executor = executor
         this.syntheticPodName = super.getSyntheticPodName(task)
+        this.configMapName = configMapName
     }
 
     @Override
@@ -53,9 +59,28 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     @Override
     protected Map newSubmitRequest0(TaskRun task, String imageName) {
         Map<String, Object> pod = super.newSubmitRequest0(task, imageName)
-        if ( (k8sConfig as CWSK8sConfig)?.getScheduler() ){
-            (pod.spec as Map).schedulerName = (k8sConfig as CWSK8sConfig).getScheduler().getName() + "-" + getRunName()
+        final CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
+        if ( cwsK8sConfig?.getScheduler() ){
+            (pod.spec as Map).schedulerName = cwsK8sConfig.getScheduler().getName() + "-" + getRunName()
         }
+
+        final CWSConfig cwsConfig = executor.getCWSConfig()
+        if ( cwsConfig.strategyIsLocationAware() ) {
+            //Set default mode for configMap
+            Map specs = pod.spec as Map
+            List<Map> volumes = specs?.volumes as List<Map>
+            if (volumes) {
+                for (Map vol : volumes) {
+                    if (vol.configMap == null) continue
+                    if ((vol.configMap as Map)?.name == configMapName) {
+                        Map configMap = vol.configMap as Map
+                        configMap.defaultMode = 0755
+                        break
+                    }
+                }
+            }
+        }
+
         return pod
     }
 
@@ -84,6 +109,8 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
             booleanInputs.add( [ name : key, value : input] )
         } else if ( input instanceof Number ) {
             numberInputs.add( [ name : key, value : input] )
+        } else if ( input instanceof Character ) {
+            stringInputs.add( [ name : key, value : input as String] )
         } else if ( input instanceof String ) {
             stringInputs.add( [ name : key, value : input] )
         } else if ( input instanceof GStringImpl ) {
@@ -94,7 +121,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
-    private long calculateInputSize( List<Map<String,Object>> fileInputs ){
+    private static long calculateInputSize(List<Map<String,Object>> fileInputs ){
         return fileInputs
                 .parallelStream()
                 .mapToLong {
@@ -137,7 +164,13 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         return schedulerClient.registerTask( config, task.id.intValue() )
     }
 
+    @Override
     protected BashWrapperBuilder createBashWrapper(TaskRun task) {
+        final CWSConfig cwsConfig = executor.getCWSConfig()
+        final CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
+        if ( cwsConfig.strategyIsLocationAware() ) {
+            return new WOWK8sWrapperBuilder( task , cwsK8sConfig.getStorage(), cwsConfig.memoryPredictor as boolean )
+        }
         return fusionEnabled()
                 ? fusionLauncher()
                 : new CWSK8sWrapperBuilder( task, executor.getCWSConfig().memoryPredictor as boolean )
@@ -170,22 +203,30 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
+    boolean schedulerPostProcessingHasFinished(){
+        Map state = schedulerClient.getTaskState(task.id.intValue())
+        return (!state.state) ?: ["FINISHED", "FINISHED_WITH_ERROR", "INIT_WITH_ERRORS", "DELETED"].contains( state.state.toString() )
+    }
+
     @Override
     boolean checkIfCompleted() {
         Map state = getState()
-        if( !state || !state.terminated ) {
+        final CWSConfig cwsConfig = executor.getCWSConfig()
+        if( !state || !state.terminated || ( cwsConfig.strategyIsLocationAware() && !schedulerPostProcessingHasFinished() ) ) {
             return false
         }
         if( executor.getCWSConfig().memoryPredictor ) {
             memoryAdapted = client.getAdaptedPodMemory( podName )
             if ( memoryAdapted != null ) {
                 //only use a special failure logic if the memory was adapted
-                if (state.terminated.exitCode == 128
-                        && (state.terminated.reason as String) == "StartError") {
+
+                def terminated = state.terminated as Map
+                if (terminated.exitCode == 128
+                        && (terminated.reason as String) == "StartError") {
                     failedOOM = true
                     log.info("The memory was choosen too small for the pod ${podName} to be started. More memory is tried next time.")
                     task.error = new MemoryScalingFailure()
-                } else if ((state.terminated.reason as String) == "OOMKilled") {
+                } else if ((terminated.reason as String) == "OOMKilled") {
                     failedOOM = true
                     log.info("The memory was choosen too small for the pod ${podName} to be executed. More memory is tried next time.")
                     task.error = new MemoryScalingFailure()
@@ -212,13 +253,16 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
             if( value == null )
                 continue
             switch( name ) {
-                case "scheduler_nodes_cost" :
-                case "scheduler_init_throughput":
+                case 'scheduler_nodes_cost' :
+                case 'scheduler_time_delta_phase_three' :
                     traceRecord.put( name, value )
                     break
-                case "scheduler_best_cost" :
+                case 'scheduler_best_cost' :
                     double val = parseDouble( value, file, name )
                     traceRecord.put( name, val )
+                    break
+                case 'input_size' :
+                    traceRecord.put( name, inputSize )
                     break
                 default:
                     long val = parseLong( value, file, name )
@@ -227,7 +271,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
-    private double parseDouble( String str, Path file , String row )  {
+    private static double parseDouble(String str, Path file, String row )  {
         try {
             return str.toDouble()
         }
@@ -237,7 +281,7 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         }
     }
 
-    private long parseLong( String str, Path file , String row )  {
+    private static long parseLong(String str, Path file, String row )  {
         try {
             return str.toLong()
         }

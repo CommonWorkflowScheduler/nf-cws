@@ -29,6 +29,14 @@ jobs:
           fetch-depth: 1
           submodules: true
 
+      - name: Install dependencies for C (cross-)compilation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+
+      - name: Compile C script using make
+        run: make c_scripts
+
       - name: Setup Java ${{ matrix.java_version }}
         uses: actions/setup-java@v3
         with:

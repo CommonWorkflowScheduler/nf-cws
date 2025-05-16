@@ -1,6 +1,15 @@
-# nf-cws plugin 
+# nf-cws plugin
 
-This plugin enables Nextflow to communicate with a Common Workflow Scheduler instance and transfer the required information.
+This plugin enables Nextflow to communicate with a Common Workflow Scheduler instance and transfer the required
+information.
+
+Together with the Common Workflow Scheduler, the plugin enables you:
+- to use more sophisticated scheduling strategies [(More information)](https://arxiv.org/pdf/2302.07652.pdf)
+- automatically resize the memory of your memory if your estimation is too high [(More information)](https://arxiv.org/pdf/2408.00047.pdf)
+- keep your intermediate data locally at the worker node - this saves 18% of makespan for RNA-Seq, and 95% of makespan for I/O intensive task chaining [(More information)](https://arxiv.org/pdf/2503.13072.pdf)
+
+For more information on the scheduling,
+see the [scheduler repository](https://github.com/CommonWorkflowScheduler/KubernetesScheduler).
 
 ### Supported Executors
 
@@ -8,8 +17,10 @@ This plugin enables Nextflow to communicate with a Common Workflow Scheduler ins
 
 ### How to use
 
-To run Nextflow with this plugin, you need version >=`23.03.0-edge`.
+To run Nextflow with this plugin, you need version >=`24.04.0` and <=`25.02.3-edge`
+(because Nextflow's Kubernetes refactor in `25.03.0-edge` is not supported *yet*).
 To activate the plugin, add `-plugins nf-cws` to your `nextflow` call or add the following to your `nextflow.config`:
+
 ```
 plugins {
   id 'nf-cws'
@@ -28,7 +39,8 @@ plugins {
 |    minMemory    |        - | The minimum memory to size a task to. Only used if memory prediction is performed.                                                                                               |
 |    maxMemory    |        - | The maximum memory to size a task to. Only used if memory prediction is performed.                                                                                               |
 
-##### Example: 
+##### Example:
+
 ```
 cws {
     dns = 'http://cws-scheduler/'
@@ -43,7 +55,8 @@ cws {
 
 #### K8s Executor
 
-The `k8s` executor allows starting a Common Workflow Scheduler instance on demand. This will happen if you do not define any CWS-related config. Otherwise, you can configure the following:
+The `k8s` executor allows starting a Common Workflow Scheduler instance on demand. This will happen if you do not define
+any CWS-related config. Otherwise, you can configure the following:
 
 ```
 k8s {
@@ -53,7 +66,7 @@ k8s {
         imagePullPolicy = 'IfNotPresent'
         cpu = '2'
         memory = '1400Mi'
-        container = 'commonworkflowscheduler/kubernetesscheduler:v1.0'
+        container = 'commonworkflowscheduler/kubernetesscheduler:v2.1'
         command = null
         port = 8080
         workDir = '/scheduler'
@@ -79,8 +92,37 @@ k8s {
 | autoClose       | -        | Stop the pod after the workflow is finished                                                                                  |
 | nodeSelector    | -        | A node selector for the CWS pod                                                                                              |
 
+#### WOW
+
+WOW is a new scheduling approach for dynamic scientific workflow systems that steers both data movement and task
+scheduling to reduce network congestion and overall runtime.
+
+WOW requires some additional configuration due to its use of the local file system in addition to the distributed file
+system.
+
+```
+k8s {
+   localPath = '/localdata'
+   localStorageMountPath = '/localdata'
+   storage {
+       copyStrategy = 'ftp'
+       workdir = '/localdata/localwork/'
+   }
+}
+```
+
+| Attribute             | Required | Explanation                                                                                     |
+|:----------------------|----------|-------------------------------------------------------------------------------------------------|
+| localPath             | yes      | Host path for the local mount                                                                   
+| localStorageMountPath | no       | Container path for the local mount                                                              
+| storage.copyStrategy  | no       | Strategy to copy the files between nodes - currently only supports 'ftp' (and its alias 'copy') 
+| storage.workdir       | no       | Working directory to use - must be inside of the locally mounted directory                      
+
 ### Tracing
-This plugin adds additional fields to the trace report. Therefore, you have to add the required fields to the `trace.fields` field in your Nextflow config (also check the official [documentation](https://www.nextflow.io/docs/latest/tracing.html#trace-report)).
+
+This plugin adds additional fields to the trace report. Therefore, you have to add the required fields to
+the `trace.fields` field in your Nextflow config (also check the
+official [documentation](https://www.nextflow.io/docs/latest/tracing.html#trace-report)).
 The following fields can be used:
 
 | Name                                   |                                                    Description                                                    |
@@ -106,3 +148,48 @@ The following fields can be used:
 | scheduler_delta_submitted_batch_end    |                     Time delta between a task was submitted, and the batch became schedulable                     |
 | memory_adapted                         |                                 The memory used for a task when sizing is active                                  |
 | input_size                             |                                   The sum of the input size of all task inputs                                    |
+| infiles_time:                          |              (WOW) Time to walk through and retrieve stats of all local (input) files at task start               |
+| outfiles_time:                         |              (WOW) Time to walk through and retrieve stats of all local (output) files at task start              |
+| scheduler_time_delta_phase_three:      |  (WOW) List of time instances taken to calculcate step 3 of the WOW scheduling algorithm (see paper for details)  |                                                      
+| scheduler_copy_tasks:                  |                            (WOW) Number of times copy tasks were started for this task                            |
+
+---
+
+## Citation
+
+If you use this software or artifacts in a publication, please cite it as:
+
+#### Text
+
+Lehmann Fabian, Jonathan Bader, Friedrich Tschirpke, Lauritz Thamsen, and Ulf Leser. **How Workflow Engines Should Talk
+to Resource Managers: A Proposal for a Common Workflow Scheduling Interface**. In 2023 IEEE/ACM 23rd International
+Symposium on Cluster, Cloud and Internet Computing (CCGrid). Bangalore, India, 2023.
+
+([https://arxiv.org/pdf/2302.07652.pdf](https://arxiv.org/pdf/2302.07652.pdf))
+
+#### BibTeX
+
+```
+@inproceedings{lehmannHowWorkflowEngines2023,
+ author = {Lehmann, Fabian and Bader, Jonathan and Tschirpke, Friedrich and Thamsen, Lauritz and Leser, Ulf},
+ booktitle = {2023 IEEE/ACM 23rd International Symposium on Cluster, Cloud and Internet Computing (CCGrid)},
+ title = {How Workflow Engines Should Talk to Resource Managers: A Proposal for a Common Workflow Scheduling Interface},
+ year = {2023},
+ address = {{Bangalore, India}},
+ doi = {10.1109/CCGrid57682.2023.00025}
+}
+```
+
+#### Strategy-specific Citation
+
+Please note that the following strategies originated in individual papers:
+
+- PONDER: [https://arxiv.org/pdf/2408.00047.pdf](https://arxiv.org/pdf/2408.00047.pdf)
+- WOW: [https://arxiv.org/pdf/2503.13072.pdf](https://arxiv.org/pdf/2503.13072.pdf)
+
+---
+
+#### Acknowledgement:
+
+This work was funded by the German Research Foundation (DFG), CRC 1404: "FONDA: Foundations of Workflows for Large-Scale
+Scientific Data Analysis."

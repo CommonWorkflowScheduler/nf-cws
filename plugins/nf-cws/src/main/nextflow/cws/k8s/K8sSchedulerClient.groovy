@@ -1,12 +1,13 @@
 package nextflow.cws.k8s
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.cws.CWSConfig
 import nextflow.cws.SchedulerClient
 import nextflow.exception.NodeTerminationException
 import nextflow.k8s.K8sConfig
-import nextflow.k8s.client.K8sClient
 import nextflow.k8s.client.K8sResponseException
+import nextflow.k8s.model.PodHostMount
 import nextflow.k8s.model.PodSecurityContext
 import nextflow.k8s.model.PodSpecBuilder
 import nextflow.k8s.model.PodVolumeClaim
@@ -14,13 +15,21 @@ import nextflow.k8s.model.PodVolumeClaim
 import java.nio.file.Paths
 
 @Slf4j
+@CompileStatic
 class K8sSchedulerClient extends SchedulerClient {
 
     private final CWSK8sConfig.K8sScheduler schedulerConfig
-    private final K8sClient k8sClient
+
+    private final CWSK8sClient k8sClient
+
     private final K8sConfig k8sConfig
+
     private final String namespace
+
+    private final Collection<PodHostMount> hostMounts
+
     private final Collection<PodVolumeClaim> volumeClaims
+
     private String ip
 
     K8sSchedulerClient(
@@ -29,10 +38,12 @@ class K8sSchedulerClient extends SchedulerClient {
             K8sConfig k8sConfig,
             String namespace,
             String runName,
-            K8sClient k8sClient,
-            Collection<PodVolumeClaim> volumeClaims
+            CWSK8sClient k8sClient,
+            Collection<PodVolumeClaim> volumeClaims,
+            Collection<PodHostMount> hostMounts
     ) {
         super( config, runName )
+        this.hostMounts = hostMounts ?: []
         this.volumeClaims = volumeClaims
         this.k8sClient = k8sClient
         this.k8sConfig = k8sConfig
@@ -52,14 +63,13 @@ class K8sSchedulerClient extends SchedulerClient {
         }
         data.dns = getDNS()
         data.namespace = namespace
+        data.localClaims = hostMounts
         super.registerScheduler(data)
     }
 
     private void startScheduler(){
-
         boolean start = false
         Map state
-
         try{
             //If no pod with the name exists an exceptions is thrown
             state = k8sClient.podState( schedulerConfig.getName() )
@@ -69,7 +79,6 @@ class K8sSchedulerClient extends SchedulerClient {
                 log.info "Scheduler ${schedulerConfig.getName()} is terminated"
             } else if( state.running || state.waiting ) log.trace "Scheduler ${schedulerConfig.getName()} is already running"
             else log.error "Unknown state for ${schedulerConfig.getName()}: ${state.toString()}"
-
         } catch ( K8sResponseException e ) {
             log.error( "Got unexpected HTTP error ${e.response} while checking scheduler's state", e.message )
         } catch ( NodeTerminationException ignored){
@@ -77,7 +86,6 @@ class K8sSchedulerClient extends SchedulerClient {
             start = true
             log.info "Scheduler ${schedulerConfig.getName()} can not be found and will be started..."
         }
-
         if( start ){
             log.trace "Scheduler ${schedulerConfig.getName()} is not running, let's start"
             final builder = new PodSpecBuilder()
@@ -90,26 +98,22 @@ class K8sSchedulerClient extends SchedulerClient {
                     .withNamespace( namespace )
                     .withLabel('component', 'scheduler')
                     .withLabel('tier', 'control-plane')
-                    .withLabel('app', 'nextflow')
+                    .withLabel('nextflow.io/app', 'nextflow')
+                    .withHostMounts( hostMounts )
                     .withVolumeClaims( volumeClaims )
 
             if( schedulerConfig.getNodeSelector() )
                 builder.setNodeSelector( schedulerConfig.getNodeSelector() )
-
             if ( schedulerConfig.getWorkDir() )
                 builder.withWorkDir( schedulerConfig.getWorkDir() )
-
             if( schedulerConfig.getCommand() )
                 builder.withCommand( schedulerConfig.getCommand() )
-
             if( schedulerConfig.runAsUser() != null ){
                 builder.securityContext = new PodSecurityContext( schedulerConfig.runAsUser() )
             }
-
             //This is required to use the PodSpecBuilder as it is
             builder.command = [ "delete this" ]
             Map pod = builder.build()
-
             List env = [[
                                 name: 'SCHEDULER_NAME',
                                 value: schedulerConfig.getName()
@@ -117,13 +121,12 @@ class K8sSchedulerClient extends SchedulerClient {
                                 name: 'AUTOCLOSE',
                                 value: schedulerConfig.autoClose() as String
                         ]]
-
-            Map container = pod.spec.containers.get(0) as Map
+            Map container = ((pod.spec as Map).containers as List).get(0) as Map
             container.put('env', env)
             container.remove( 'command' )
             (container.resources as Map)?.remove( 'limits' )
 
-            k8sClient.podCreate( pod, Paths.get('.nextflow-scheduler.yaml') )
+            k8sClient.podCreate( pod, Paths.get('.nextflow-scheduler.yaml'), namespace)
         }
 
         //wait for scheduler to get ready
