@@ -1,11 +1,14 @@
 # nf-cws plugin
 
 This plugin enables Nextflow to communicate with a Common Workflow Scheduler instance and transfer the required
-information.
+information, which simplifies development of scheduling algorithms.
+
+Additionally, this plugin also provides scheduling algorithms for:
+- dynamic task resizing 
 
 For more information on the scheduling,
 see the [scheduler repository](https://github.com/CommonWorkflowScheduler/KubernetesScheduler) and the [respective
-papers](#citation):
+papers](#citation).
 
 ### Supported Executors
 
@@ -13,7 +16,8 @@ papers](#citation):
 
 ### How to use
 
-To run Nextflow with this plugin, you need version >=`23.03.0-edge`.
+To run Nextflow with this plugin, you need version >=`24.04.0` and <=`25.02.3-edge`
+(because Nextflow's Kubernetes refactor in `25.03.0-edge` is not supported *yet*).
 To activate the plugin, add `-plugins nf-cws` to your `nextflow` call or add the following to your `nextflow.config`:
 
 ```
