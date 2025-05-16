@@ -57,6 +57,10 @@ jobs:
           architecture: x64
           distribution: 'temurin'
 
+      - name: Check files
+        run: |
+          ls -lisah plugins/nf-cws/src/resources/nf-cws/
+
       - name: Compile
         run: ./gradlew assemble
 
