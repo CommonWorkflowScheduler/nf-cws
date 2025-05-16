@@ -2,7 +2,6 @@ package nextflow.cws.wow.file
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import nextflow.cws.wow.util.DateParser
 
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
@@ -41,6 +40,16 @@ class WOWFileAttributes implements BasicFileAttributes {
 
     private final boolean local
 
+    private static FileTime fileTimeFromString( String date ) {
+        for (int i = 0; i < date.length(); i++) {
+            if ( !date.charAt(i).isDigit() ) {
+                return null
+            }
+        }
+        long nanos = Long.parseLong(date)
+        return FileTime.fromMillis(nanos / 1e6 as long)
+    }
+
     WOWFileAttributes( String[] data ) {
         boolean fileExists = data[ FILE_EXISTS ] == "1"
         if ( fileExists && data.length != 8 ) throw new RuntimeException( "Cannot parse row (8 columns required): ${data.join(',')}" )
@@ -59,9 +68,9 @@ class WOWFileAttributes implements BasicFileAttributes {
         this.link = !data[ REAL_PATH ].isEmpty()
         this.size = data[ SIZE ] as Long
         String fileType = data[ FILE_TYPE ]
-        this.accessDate = DateParser.fileTimeFromString(data[ ACCESS_DATE ])
-        this.modificationDate = DateParser.fileTimeFromString(data[ MODIFICATION_DATE ])
-        this.creationDate = DateParser.fileTimeFromString(data[ CREATION_DATE ]) ?: this.modificationDate
+        this.accessDate = fileTimeFromString(data[ ACCESS_DATE ])
+        this.modificationDate = fileTimeFromString(data[ MODIFICATION_DATE ])
+        this.creationDate = fileTimeFromString(data[ CREATION_DATE ]) ?: this.modificationDate
         if ( fileType.startsWith("non-local ") ) {
             this.local = false
             this.fileType = fileType.substring( 10 )

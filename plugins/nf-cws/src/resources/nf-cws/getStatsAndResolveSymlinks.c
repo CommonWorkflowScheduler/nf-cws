@@ -273,7 +273,7 @@ int getFullDescr(char * const * dir,
         }
         fprintf(
             file_ptr,
-            "%s;%i;%s;%li;%s;%li%li;%li%li;%li%li\n",
+            "%s;%i;%s;%li;%s;%li%09li;%li%09li;%li%09li\n",
             ptr->fts_path,
             exists,
             symlink_target_path,
