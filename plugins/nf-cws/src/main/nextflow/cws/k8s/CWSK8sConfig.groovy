@@ -28,11 +28,15 @@ class CWSK8sConfig extends K8sConfig {
     }
 
     K8sScheduler getScheduler(){
-        return target.scheduler || locationAwareScheduling() ? new K8sScheduler( (Map<String,Object>)target.scheduler ) : null
+        target.scheduler || locationAwareScheduling() ? new K8sScheduler( (Map<String,Object>)target.scheduler ) : null
     }
 
     Storage getStorage() {
         locationAwareScheduling() ? new Storage((Map<String, Object>) target.storage, getLocalClaimPaths()) : null
+    }
+
+    String getArchitecture() {
+        target.architecture ?: System.getProperty("os.arch")
     }
 
     String getLocalPath() {
@@ -58,12 +62,14 @@ class CWSK8sConfig extends K8sConfig {
 
     void checkStorageAndPaths(K8sClient client, String pipelineName) {
         super.checkStorageAndPaths(client)
-        //The nextflow project/workflow has to be on a shared drive
-        if (pipelineName && pipelineName[0] == '/' && !findVolumeClaimByPath(pipelineName))
-            throw new AbortOperationException("Kubernetes `pipelineName` must be a path mounted as a persistent volume -- projectDir=$pipelineName; volumes=${getClaimPaths().join(', ')}")
+        if ( locationAwareScheduling() ) {
+            //The nextflow project/workflow has to be on a shared drive
+            if (pipelineName && pipelineName[0] == '/' && !findVolumeClaimByPath(pipelineName))
+                throw new AbortOperationException("Kubernetes `pipelineName` must be a path mounted as a persistent volume -- projectDir=$pipelineName; volumes=${getClaimPaths().join(', ')}")
 
-        if (getStorage() && !findLocalVolumeClaimByPath(getStorage().getWorkdir()))
-            throw new AbortOperationException("Kubernetes `storage.workdir` must be a path mounted as a local volume -- storage.workdir=${getStorage().getWorkdir()}; volumes=${getLocalClaimPaths().join(', ')}")
+            if (getStorage() && !findLocalVolumeClaimByPath(getStorage().getWorkdir()))
+                throw new AbortOperationException("Kubernetes `storage.workdir` must be a path mounted as a local volume -- storage.workdir=${getStorage().getWorkdir()}; volumes=${getLocalClaimPaths().join(', ')}")
+        }
     }
 
     @CompileStatic

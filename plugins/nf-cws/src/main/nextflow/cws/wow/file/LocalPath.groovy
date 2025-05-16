@@ -40,7 +40,7 @@ class LocalPath implements Path, Serializable {
         if ( c.isAssignableFrom( getClass() ) ) return (T) this
         if ( c.isAssignableFrom( LocalPath.class ) ) return (T) toFile()
         if ( c == String.class ) return (T) toString()
-        log.info("Invoke method asType $c on ${this.class}")
+        log.debug("Invoke method asType $c on ${this.class}")
         return super.asType( c )
     }
 

@@ -31,7 +31,7 @@ class WOWK8sWrapperBuilder extends CWSK8sWrapperBuilder {
                 case 'copy':
                 case 'ftp':
                     if ( this.scratch == null || this.scratch == true ){
-                        //Reduce amount of local data
+                        //Reduce amount of local data - only keep necessary outputs
                         this.scratch = (storage.getWorkdir() as Path).resolve( "scratch" ).toString()
                         this.stageOutMode = 'move'
                     }
@@ -48,7 +48,8 @@ class WOWK8sWrapperBuilder extends CWSK8sWrapperBuilder {
 
     @Override
     protected boolean shouldUnstageOutputs() {
-        return localWorkDir || super.shouldUnstageOutputs()
+        assert localWorkDir
+        return super.shouldUnstageOutputs()
     }
 
     private String getStorageLocalWorkDir() {
@@ -84,12 +85,11 @@ class WOWK8sWrapperBuilder extends CWSK8sWrapperBuilder {
 
     @Override
     protected String getLaunchCommand(String interpreter, String env) {
+        assert storage && localWorkDir
         String cmd = ''
-        if( storage && localWorkDir ){
-            cmd += "local INFILESTIME=\$(\"/etc/nextflow/${statFileName}\" infiles \"${workDir.toString()}/.command.infiles\" \"${getStorageLocalWorkDir()}\" \"\$PWD/\" || true)\n"
-        }
+        cmd += "local INFILESTIME=\$(\"/etc/nextflow/${statFileName}\" infiles \"${workDir.toString()}/.command.infiles\" \"${getStorageLocalWorkDir()}\" \"\$PWD/\" || true)\n"
         cmd += super.getLaunchCommand(interpreter, env)
-        if( storage && localWorkDir && isTraceRequired() ){
+        if( isTraceRequired() ){
             cmd += "\nlocal exitCode=\$?"
             cmd += """\necho \"infiles_time=\${INFILESTIME}" >> ${workDir.resolve(TaskRun.CMD_TRACE)}\n"""
             cmd += "return \$exitCode\n"
@@ -99,13 +99,12 @@ class WOWK8sWrapperBuilder extends CWSK8sWrapperBuilder {
 
     @Override
     String getCleanupCmd(String scratch) {
+        assert storage && localWorkDir
         String cmd = super.getCleanupCmd( scratch )
-        if( storage && localWorkDir ){
-            cmd += "mkdir -p \"${localWorkDir.toString()}/\" || true\n"
-            cmd += "local OUTFILESTIME=\$(\"/etc/nextflow/${statFileName}\" outfiles \"${workDir.toString()}/.command.outfiles\" \"${getStorageLocalWorkDir()}\" \"${localWorkDir.toString()}/\" || true)\n"
-            if ( isTraceRequired() ) {
-                cmd += "echo \"outfiles_time=\${OUTFILESTIME}\" >> ${workDir.resolve(TaskRun.CMD_TRACE)}"
-            }
+        cmd += "mkdir -p \"${localWorkDir.toString()}/\" || true\n"
+        cmd += "local OUTFILESTIME=\$(\"/etc/nextflow/${statFileName}\" outfiles \"${workDir.toString()}/.command.outfiles\" \"${getStorageLocalWorkDir()}\" \"${localWorkDir.toString()}/\" || true)\n"
+        if ( isTraceRequired() ) {
+            cmd += "echo \"outfiles_time=\${OUTFILESTIME}\" >> ${workDir.resolve(TaskRun.CMD_TRACE)}"
         }
         return cmd
     }

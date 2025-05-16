@@ -43,8 +43,10 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
                 ftpClient.setBinaryType()
                 return ftpClient
             } catch ( IOException e ) {
-                if ( trial > 5 ) throw e
-                log.error("Cannot create FTP client: $daemon on $node", e)
+                if ( trial > 5 ) {
+                    log.error("Cannot create FTP client: $daemon on $node", e)
+                    throw e
+                }
                 sleep(Math.pow(2, trial++) as long)
                 daemon = schedulerClient.getDaemonOnNode(node)
             }
@@ -111,22 +113,22 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     String getScheme() {
-        return "wow"
+        "wow"
     }
 
     @Override
     FileSystem newFileSystem(URI uri, Map<String, ?> map) throws IOException {
-        return getFileSystem(uri)
+        getFileSystem(uri)
     }
 
     @Override
     FileSystem getFileSystem(URI uri) {
-        return WOWFileSystem.INSTANCE
+        WOWFileSystem.INSTANCE
     }
 
     @Override
     Path getPath(URI uri) {
-        return getFileSystem(uri).getPath(uri.path)
+        getFileSystem(uri).getPath(uri.path)
     }
 
     @Override
@@ -165,12 +167,12 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     boolean isSameFile(Path path1, Path path2) throws IOException {
-        return path1 == path2
+        path1 == path2
     }
 
     @Override
     boolean isHidden(Path path) throws IOException {
-        return path.getFileName().startsWith(".")
+        path.getFileName().startsWith(".")
     }
 
     @Override
@@ -209,12 +211,12 @@ class WOWFileSystemProvider extends FileSystemProvider implements FileSystemTran
 
     @Override
     boolean canUpload(Path source, Path target) {
-        return false
+        false
     }
 
     @Override
     boolean canDownload(Path source, Path target) {
-        return true
+        true
     }
 
     @Override

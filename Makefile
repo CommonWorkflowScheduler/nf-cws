@@ -44,13 +44,12 @@ clean:
 	rm -rf work
 	rm -rf build
 	rm -rf plugins/*/build
-	rm $(C_SCRIPT_ALL_TARGETS)
+	rm -f $(C_SCRIPT_ALL_TARGETS)
 	./gradlew clean
 
 compile:
 	./gradlew :nextflow:exportClasspath compileGroovy
 	@echo "DONE `date`"
-
 
 check:
 	./gradlew check

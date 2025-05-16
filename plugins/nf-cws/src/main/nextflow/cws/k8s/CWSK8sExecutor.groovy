@@ -104,7 +104,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
 
         if ( cwsK8sConfig.locationAwareScheduling() ) {
             createDaemonSet()
-            registerGetStatsConfigMap()
+            registerGetStatsConfigMap( cwsK8sConfig.getArchitecture() )
         }
 
         CWSK8sConfig.K8sScheduler k8sSchedulerConfig = cwsK8sConfig.getScheduler()
@@ -159,18 +159,21 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
 
     @Override
     void shutdown() {
-        final CWSK8sConfig.K8sScheduler schedulerConfig = (k8sConfig as CWSK8sConfig).getScheduler()
+        final CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
+        final CWSK8sConfig.K8sScheduler schedulerConfig = cwsK8sConfig.getScheduler()
 
         schedulerClient.publishRemaining();
 
-        int remaining
-        do {
-            remaining = schedulerClient.getRemainingToPublish()
-            if( remaining > 0 ) {
-                log.info "Waiting for $remaining files to be published"
-                sleep( 1000 )
-            }
-        } while( remaining > 0 )
+        if ( cwsK8sConfig.locationAwareScheduling() ) {
+            int remaining
+            do {
+                remaining = schedulerClient.getRemainingToPublish()
+                if (remaining > 0) {
+                    log.info "Waiting for $remaining files to be published"
+                    sleep(1000)
+                }
+            } while (remaining > 0)
+        }
 
         if( schedulerConfig ) {
             try{
@@ -191,11 +194,10 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         log.trace "Close K8s Executor"
     }
 
-    protected void registerGetStatsConfigMap() {
+    protected void registerGetStatsConfigMap( String architecture ) {
         Map<String,String> configMap = [:]
 
         String architectureStatFileName
-        final String architecture = System.getProperty("os.arch")
         if (architecture == "amd64" || architecture == "x86_64") {
             architectureStatFileName = "/nf-cws/getStatsAndResolveSymlinks_linux_x86_64"
         } else if (architecture == "aarch64" || architecture == "arm64") {

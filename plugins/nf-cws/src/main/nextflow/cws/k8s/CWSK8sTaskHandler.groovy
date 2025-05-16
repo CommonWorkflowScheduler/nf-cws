@@ -58,20 +58,23 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
     @Override
     protected Map newSubmitRequest0(TaskRun task, String imageName) {
         Map<String, Object> pod = super.newSubmitRequest0(task, imageName)
-        if ( (k8sConfig as CWSK8sConfig)?.getScheduler() ){
-            (pod.spec as Map).schedulerName = (k8sConfig as CWSK8sConfig).getScheduler().getName() + "-" + getRunName()
+        final CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
+        if ( cwsK8sConfig?.getScheduler() ){
+            (pod.spec as Map).schedulerName = cwsK8sConfig.getScheduler().getName() + "-" + getRunName()
         }
 
-        //Set default mode for configMap
-        Map specs = pod.spec as Map
-        List<Map> volumes = specs?.volumes as List<Map>
-        if ( volumes ) {
-            for ( Map vol : volumes ) {
-                if ( vol.configMap == null ) continue
-                if ( (vol.configMap as Map)?.name == configMapName ) {
-                    Map configMap = vol.configMap as Map
-                    configMap.defaultMode = 0755
-                    break
+        if ( cwsK8sConfig.locationAwareScheduling() ) {
+            //Set default mode for configMap
+            Map specs = pod.spec as Map
+            List<Map> volumes = specs?.volumes as List<Map>
+            if (volumes) {
+                for (Map vol : volumes) {
+                    if (vol.configMap == null) continue
+                    if ((vol.configMap as Map)?.name == configMapName) {
+                        Map configMap = vol.configMap as Map
+                        configMap.defaultMode = 0755
+                        break
+                    }
                 }
             }
         }
