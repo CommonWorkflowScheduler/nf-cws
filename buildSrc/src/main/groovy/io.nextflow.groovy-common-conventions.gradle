@@ -13,6 +13,7 @@ repositories {
 }
 
 java {
+    // these settings apply to all jvm tooling, including groovy
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
