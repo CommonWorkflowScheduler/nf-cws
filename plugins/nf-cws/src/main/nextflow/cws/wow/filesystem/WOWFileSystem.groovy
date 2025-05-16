@@ -14,7 +14,7 @@ class WOWFileSystem extends FileSystem {
 
     @Override
     FileSystemProvider provider() {
-        return WOWFileSystemProvider.INSTANCE
+        WOWFileSystemProvider.INSTANCE
     }
 
     @Override
@@ -23,17 +23,17 @@ class WOWFileSystem extends FileSystem {
 
     @Override
     boolean isOpen() {
-        return true
+        true
     }
 
     @Override
     boolean isReadOnly() {
-        return false
+        false
     }
 
     @Override
     String getSeparator() {
-        return "/"
+        "/"
     }
 
     @Override
@@ -48,7 +48,7 @@ class WOWFileSystem extends FileSystem {
 
     @Override
     Set<String> supportedFileAttributeViews() {
-        return new HashSet<>()
+        new HashSet<>()
     }
 
     @Override
@@ -59,7 +59,7 @@ class WOWFileSystem extends FileSystem {
     @Override
     @CompileDynamic
     PathMatcher getPathMatcher(String s) {
-        return new PathMatcher() {
+        new PathMatcher() {
             private final def matcher = FileSystems.getDefault().getPathMatcher( s )
             @Override
             boolean matches(Path path) {
