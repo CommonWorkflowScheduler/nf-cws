@@ -9,8 +9,29 @@ on:
     branches:
       - '*'
 jobs:
+  compile-c-binaries:
+    name: Compile C binaries
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+          submodules: true
+
+      - name: Install dependencies for (cross-)compilation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+
+      - name: Compile using make
+        run: make c_scripts
+
   build:
     name: Build nf-cws
+    needs: compile-c-binaries
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     runs-on: ubuntu-latest
     timeout-minutes: 10

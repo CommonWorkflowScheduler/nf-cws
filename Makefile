@@ -23,6 +23,8 @@ $(info - target x86_64-linux-gnu: saved to $(C_SCRIPT_X86_64))
 $(error Aborting)
 endif
 
+c_scripts: $(C_SCRIPT_ALL_TARGETS)
+
 $(C_SCRIPT_AARCH64): $(C_SRIPT_SRC)
 	clang -static \
 		-target aarch64-linux-gnu \
