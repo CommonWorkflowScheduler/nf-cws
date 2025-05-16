@@ -1,6 +1,0 @@
-name: compile-c-script.yml
-
-jobs:
-  - name: Compile C scripts
-    if: steps.cache-c.outputs.cache-hit != 'true'
-    run: make c_scripts

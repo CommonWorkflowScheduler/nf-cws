@@ -34,7 +34,7 @@ class WorkdirHelperTest extends Specification {
         files.put( sharedPath7, localPath7 )
         def helper = new WorkdirHelper( Path.of(localPath), files )
         def workDir = Path.of("/input/data/work/be/8292aaebea2ddf9ae8ad4952882dcb")
-        def attributes = new  WOWFileAttributes(workDir)
+        def attributes = new WOWFileAttributes(workDir)
         WorkdirPath path = new WorkdirPath( workDir, attributes, workDir, helper )
         def stream = helper.getDirectoryStream( path )
         def result = stream.collect()

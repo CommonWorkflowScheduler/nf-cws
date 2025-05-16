@@ -85,7 +85,17 @@ class WOWFileAttributes implements BasicFileAttributes {
     }
 
     WOWFileAttributes(Path path ) {
-        if (path.isDirectory()) {
+        if ( !path.exists() ) {
+            directory = true
+            link = false
+            size = 4096
+            fileType = 'directory'
+            creationDate = FileTime.fromMillis( 0 )
+            accessDate = FileTime.fromMillis( 0 )
+            modificationDate = FileTime.fromMillis( 0 )
+            destination = path
+            local = false
+        } else if ( path.isDirectory() ) {
             directory = true
             link = false
             size = 4096

@@ -34,10 +34,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang lld gcc-aarch64-linux-gnu libc6-dev-arm64-cross
 
-      - name: Compile using make
-        run: |
-          make c_scripts
-          ls -la plugins/nf-cws/src/resources/nf-cws
+      - name: Compile C script using make
+        run: make c_scripts
 
       - name: Setup Java ${{ matrix.java_version }}
         uses: actions/setup-java@v3
