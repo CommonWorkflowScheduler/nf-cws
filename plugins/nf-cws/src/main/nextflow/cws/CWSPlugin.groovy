@@ -1,6 +1,7 @@
 package nextflow.cws
 
 import groovy.transform.CompileStatic
+import nextflow.BuildInfo
 import nextflow.cws.wow.file.LocalPath
 import nextflow.cws.wow.file.OfflineLocalPath
 import nextflow.cws.wow.file.WorkdirPath
@@ -59,9 +60,28 @@ class CWSPlugin extends BasePlugin {
         ] )
     }
 
+    private checkForK8sPlugin() {
+        // in 25.03.0-edge, Nextflow's Kubernetes functionality was refactored into a plugin
+        boolean isK8sPluginVersion =  getWrapper()
+                .getPluginManager()
+                .getVersionManager()
+                .checkVersionConstraint(BuildInfo.version, ">=25.03.0")
+
+        if ( isK8sPluginVersion ) {
+            PluginWrapper searchResultNfK8s = getWrapper()
+                .getPluginManager()
+                .getPlugins()
+                .find { it.getPluginId() == 'nf-k8s' }
+            if ( searchResultNfK8s == null ) {
+                throw new IllegalStateException("The 'nf-k8s' plugin is required by nf-cws but not loaded.")
+            }
+        }
+    }
+
     @Override
     void start() {
         super.start()
+        checkForK8sPlugin()
         registerTraceFields()
         KryoHelper.register( LocalPath, LocalPathSerializer )
         KryoHelper.register( OfflineLocalPath, LocalPathSerializer )
