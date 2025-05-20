@@ -25,10 +25,6 @@ plugins {
 }
 ```
 
-For Nextflow versions >=`25.03.0`, the `nf-k8s` plugin is required.
-`nf-cws` will try to automatically start the `nf-k8s` plugin for you, if required.
-Still, you may be better off adding it to your call or the config explicitly.
-
 ### Configuration
 
 |    Attribute    | Required | Explanation                                                                                                                                                                      |
