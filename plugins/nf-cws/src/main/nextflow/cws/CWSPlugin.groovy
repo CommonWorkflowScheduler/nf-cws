@@ -9,6 +9,7 @@ import nextflow.cws.wow.filesystem.WOWFileSystemProvider
 import nextflow.cws.wow.serializer.LocalPathSerializer
 import nextflow.file.FileHelper
 import nextflow.plugin.BasePlugin
+import nextflow.plugin.Plugins
 import nextflow.trace.TraceRecord
 import nextflow.util.KryoHelper
 import org.pf4j.PluginWrapper
@@ -68,13 +69,7 @@ class CWSPlugin extends BasePlugin {
                 .checkVersionConstraint(BuildInfo.version, ">=25.03.0")
 
         if ( isK8sPluginVersion ) {
-            PluginWrapper searchResultNfK8s = getWrapper()
-                .getPluginManager()
-                .getPlugins()
-                .find { it.getPluginId() == 'nf-k8s' }
-            if ( searchResultNfK8s == null ) {
-                throw new IllegalStateException("The 'nf-k8s' plugin is required by nf-cws but not loaded.")
-            }
+            Plugins.startIfMissing('nf-k8s')
         }
     }
 

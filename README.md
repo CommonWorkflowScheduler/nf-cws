@@ -17,22 +17,17 @@ see the [scheduler repository](https://github.com/CommonWorkflowScheduler/Kubern
 
 ### How to use
 
-To run Nextflow with this plugin, you need version >=`24.04.0` and the nf-k8s plugin is required for Nextflow versions >=`25.03.0`.
-To activate the plugin, add `-plugins nf-k8s nf-cws` (or just `-plugins nf-cws` in older versions) to your `nextflow` call,
-or add the following to your `nextflow.config`:
+To run Nextflow with this plugin, you need version >=`24.04.0`.
+To activate the plugin, add `-plugins nf-cws` to your `nextflow` call, or add the following to your `nextflow.config`:
+```
+plugins {
+  id 'nf-cws'
+}
+```
 
-```
-plugins {
-  id 'nf-k8s'
-  id 'nf-cws'
-}
-```
-or in older versions just:
-```
-plugins {
-  id 'nf-cws'
-}
-```
+For Nextflow versions >=`25.03.0`, the `nf-k8s` plugin is required.
+`nf-cws` will try to automatically start the `nf-k8s` plugin for you, if required.
+Still, you may be better off adding it to your call or the config explicitly.
 
 ### Configuration
 
