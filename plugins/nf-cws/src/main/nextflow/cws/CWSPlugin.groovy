@@ -1,6 +1,7 @@
 package nextflow.cws
 
 import groovy.transform.CompileStatic
+import nextflow.BuildInfo
 import nextflow.cws.wow.file.LocalPath
 import nextflow.cws.wow.file.OfflineLocalPath
 import nextflow.cws.wow.file.WorkdirPath
@@ -8,6 +9,7 @@ import nextflow.cws.wow.filesystem.WOWFileSystemProvider
 import nextflow.cws.wow.serializer.LocalPathSerializer
 import nextflow.file.FileHelper
 import nextflow.plugin.BasePlugin
+import nextflow.plugin.Plugins
 import nextflow.trace.TraceRecord
 import nextflow.util.KryoHelper
 import org.pf4j.PluginWrapper
@@ -59,9 +61,21 @@ class CWSPlugin extends BasePlugin {
         ] )
     }
 
+    private checkForK8sPlugin() {
+        // in 25.03.0-edge, Nextflow's Kubernetes functionality was refactored into a plugin
+        boolean isK8sPluginVersion = getWrapper()
+                .getPluginManager()
+                .getVersionManager()
+                .checkVersionConstraint(BuildInfo.version, ">=25.03.0")
+        if ( isK8sPluginVersion ) {
+            Plugins.startIfMissing('nf-k8s')
+        }
+    }
+
     @Override
     void start() {
         super.start()
+        checkForK8sPlugin()
         registerTraceFields()
         KryoHelper.register( LocalPath, LocalPathSerializer )
         KryoHelper.register( OfflineLocalPath, LocalPathSerializer )
