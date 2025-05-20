@@ -63,11 +63,10 @@ class CWSPlugin extends BasePlugin {
 
     private checkForK8sPlugin() {
         // in 25.03.0-edge, Nextflow's Kubernetes functionality was refactored into a plugin
-        boolean isK8sPluginVersion =  getWrapper()
+        boolean isK8sPluginVersion = getWrapper()
                 .getPluginManager()
                 .getVersionManager()
                 .checkVersionConstraint(BuildInfo.version, ">=25.03.0")
-
         if ( isK8sPluginVersion ) {
             Plugins.startIfMissing('nf-k8s')
         }
