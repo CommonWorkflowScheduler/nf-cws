@@ -29,7 +29,7 @@ import java.nio.file.Paths
 
 @Slf4j
 @CompileStatic
-@ServiceName('k8s')
+@ServiceName( value = 'k8s', important = true )
 class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
 
     @PackageScope SchedulerClient schedulerClient

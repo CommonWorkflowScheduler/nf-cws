@@ -34,7 +34,7 @@ sourceSets {
 }
 
 ext{
-    nextflowVersion = '25.01.0-edge'
+    nextflowVersion = '25.03.0-edge'
 }
 
 dependencies {
@@ -42,6 +42,7 @@ dependencies {
     compileOnly "io.nextflow:nextflow:$nextflowVersion"
     compileOnly 'org.slf4j:slf4j-api:2.0.16'
     compileOnly 'org.pf4j:pf4j:3.12.0'
+    implementation 'io.nextflow:nf-k8s:1.0.0'
 
     // test configuration
     testImplementation "org.apache.groovy:groovy:4.0.26"

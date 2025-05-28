@@ -17,8 +17,7 @@ see the [scheduler repository](https://github.com/CommonWorkflowScheduler/Kubern
 
 ### How to use
 
-To run Nextflow with this plugin, you need version >=`24.04.0` and <=`25.02.3-edge`
-(because Nextflow's Kubernetes refactor in `25.03.0-edge` is not supported *yet*).
+To run Nextflow with this plugin, you need version >=`24.04.0`.
 To activate the plugin, add `-plugins nf-cws` to your `nextflow` call or add the following to your `nextflow.config`:
 
 ```
