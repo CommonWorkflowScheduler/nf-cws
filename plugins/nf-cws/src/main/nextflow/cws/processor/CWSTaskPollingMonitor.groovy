@@ -66,6 +66,12 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
         return pendingTasks
     }
 
+    private static removePublishDirIfSkipEnabled( TaskHandler handler ) {
+        if( handler.task.config.get('skipPublishDir') ) {
+            handler.task.config.put('publishDir', null)
+        }
+    }
+
     private static void checkPublishDirMode(TaskHandler handler ) {
         def publishDirs = handler.task.config.get('publishDir')
         if ( publishDirs && publishDirs instanceof List ) {
@@ -95,6 +101,7 @@ class CWSTaskPollingMonitor extends TaskPollingMonitor {
             OfflineLocalPath path = new WorkdirPath( workDir, attributes, workDir, helper )
             handler.task.workDir = path
         }
+        removePublishDirIfSkipEnabled(handler)
         checkPublishDirMode(handler)
         super.finalizeTask(handler)
         helper?.validate()
