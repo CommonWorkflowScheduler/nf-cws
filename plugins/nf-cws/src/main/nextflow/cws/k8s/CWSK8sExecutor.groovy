@@ -162,7 +162,7 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
         final CWSK8sConfig cwsK8sConfig = k8sConfig as CWSK8sConfig
         final CWSK8sConfig.K8sScheduler schedulerConfig = cwsK8sConfig.getScheduler()
 
-        schedulerClient.publishRemaining();
+        schedulerClient.publishRemaining()
 
         if ( getCWSConfig().strategyIsLocationAware() ) {
             int remaining
