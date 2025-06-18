@@ -272,19 +272,33 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
             mounts << claim
         }
 
+        CWSK8sConfig.Storage storage = (k8sConfig as CWSK8sConfig).getStorage()
+
         String name = "mount-${session.runName.replace('_', '-')}"
+        def resources = [
+                limits: [
+                        memory: storage.getMemory()
+                ],
+                requests: [
+                        memory: storage.getMemory()
+                ]
+        ]
+        if ( storage.getCpu() ) {
+            (resources.limits as Map).put( 'cpu', storage.getCpu() )
+            (resources.requests as Map).put( 'cpu', storage.getCpu() )
+        }
         def spec = [
                 containers: [ [
                                       name: name,
                                       image: (k8sConfig as CWSK8sConfig).getStorage().getImageName(),
                                       volumeMounts: mounts,
-                                      imagePullPolicy : 'IfNotPresent'
+                                      imagePullPolicy : 'IfNotPresent',
+                                      resources: resources
                               ] ],
                 volumes: volumes,
                 serviceAccount: client.config.serviceAccount
         ]
 
-        CWSK8sConfig.Storage storage = (k8sConfig as CWSK8sConfig).getStorage()
         if( storage.getNodeSelector() )
             spec.put( 'nodeSelector', storage.getNodeSelector().toSpec() as Serializable )
 

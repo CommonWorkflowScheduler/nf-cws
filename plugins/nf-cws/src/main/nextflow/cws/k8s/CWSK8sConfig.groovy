@@ -180,5 +180,17 @@ class CWSK8sConfig extends K8sConfig {
         String getCmd() {
             target.cmd as String
         }
+
+        Double getCpu() {
+            if ( target.cpu ) {
+                return target.cpu as double
+            }
+            return null
+        }
+
+        String getMemory() {
+             target.memory as String ?: '256Mi'
+        }
+
     }
 }
