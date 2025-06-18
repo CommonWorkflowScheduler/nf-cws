@@ -313,8 +313,8 @@ class CWSK8sExecutor extends K8sExecutor implements ExtensionPoint {
                         namespace: k8sConfig.getNamespace() ?: 'default'
                 ],
                 spec : [
-                        restartPolicy: 'Always',
                         template: [
+                                restartPolicy: 'Always',
                                 metadata: [
                                         labels: [
                                                 name : name,
