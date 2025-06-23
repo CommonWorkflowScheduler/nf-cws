@@ -94,6 +94,18 @@ class CWSK8sClient extends K8sClient {
         configCreate0(spec)
     }
 
+    K8sResponseJson podDelete(String name) {
+        try {
+            return super.podDelete( name )
+        } catch ( Exception e ) {
+            log.warn "Failed to delete pod '$name' -- cause: ${e.message ?: e}"
+            if ( 'returned an error code=404' in e.message ) {
+                return null
+            }
+            throw e
+        }
+    }
+
     /**
      * Get the memory of a pod that has been adapted by the CWS
      * @param podName The name of the pod
