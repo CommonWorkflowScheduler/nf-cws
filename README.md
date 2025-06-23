@@ -112,10 +112,12 @@ k8s {
 
 | Attribute             | Required | Explanation                                                                                     |
 |:----------------------|----------|-------------------------------------------------------------------------------------------------|
-| localPath             | yes      | Host path for the local mount                                                                   
-| localStorageMountPath | no       | Container path for the local mount                                                              
-| storage.copyStrategy  | no       | Strategy to copy the files between nodes - currently only supports 'ftp' (and its alias 'copy') 
-| storage.workdir       | no       | Working directory to use - must be inside of the locally mounted directory                      
+| localPath             | yes      | Host path for the local mount                                                                   |
+| localStorageMountPath | no       | Container path for the local mount                                                              |
+| storage.copyStrategy  | no       | Strategy to copy the files between nodes - currently only supports 'ftp' (and its alias 'copy') |
+| storage.workdir       | no       | Working directory to use - must be inside of the locally mounted directory                      |
+| storage.cpu           | no       | CPU to use for daemons running on all nodes, default: empty - no limits                         |
+| storage.memory        | no       | Memory to use for daemons running on all nodes, default: 256Mi                                  |
 
 ### Tracing
 
