@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 import nextflow.cws.CWSConfig
 import nextflow.cws.SchedulerClient
+import nextflow.exception.ProcessRetryableException
 import nextflow.executor.BashWrapperBuilder
 import nextflow.extension.GroupKey
 import nextflow.file.FileHolder
@@ -198,7 +199,9 @@ class CWSK8sTaskHandler extends K8sTaskHandler {
         try {
             return super.checkIfRunning()
         } catch ( Exception e) {
-            log.error("Error checking if task is running", e)
+            if ( e instanceof ProcessRetryableException ) {
+                throw new RuntimeException( "Exception while checking if task is running", e )
+            }
             throw e
         }
     }
